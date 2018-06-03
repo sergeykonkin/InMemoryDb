@@ -10,7 +10,7 @@ namespace InMemoryDb.Tests
     [SetUpFixture]
     public class Setup
     {
-        private LocalDb _db = null;
+        private LocalDb _db;
 
         [OneTimeSetUp]
         public void BeforeAllTests()
@@ -28,16 +28,10 @@ namespace InMemoryDb.Tests
 
         private void InitDb()
         {
-#if DEBUG
             _db = new LocalDb(version: "mssqllocaldb");
             Env.ConnectionString = _db.ConnectionString;
-            var conn = _db.OpenConnection();
-#else
-            var appVeyorConnectionString = "Server=(local)\\SQL2017;Database=master;User ID=sa;Password=Password12!";
-            Env.ConnectionString = appVeyorConnectionString;
-            var conn = new SqlConnection(appVeyorConnectionString);
-#endif
-            using (conn)
+
+            using (var conn = new SqlConnection(Env.ConnectionString))
             {
                 conn.Execute(@"
 CREATE TABLE [User] (
