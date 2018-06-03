@@ -1,0 +1,22 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "InMemoryDb", "InMemoryDb\InMemoryDb.csproj", "{A5EE40E8-59CA-4AB7-9995-5DCC318BACEC}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "InMemoryDb.Tests", "InMemoryDb.Tests\InMemoryDb.Tests.csproj", "{214E961D-7ABC-43D3-BFE4-1689C0E42F54}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{A5EE40E8-59CA-4AB7-9995-5DCC318BACEC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A5EE40E8-59CA-4AB7-9995-5DCC318BACEC}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A5EE40E8-59CA-4AB7-9995-5DCC318BACEC}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A5EE40E8-59CA-4AB7-9995-5DCC318BACEC}.Release|Any CPU.Build.0 = Release|Any CPU
+		{214E961D-7ABC-43D3-BFE4-1689C0E42F54}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{214E961D-7ABC-43D3-BFE4-1689C0E42F54}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{214E961D-7ABC-43D3-BFE4-1689C0E42F54}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{214E961D-7ABC-43D3-BFE4-1689C0E42F54}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+EndGlobal

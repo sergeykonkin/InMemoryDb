@@ -1,0 +1,20 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFrameworks>netstandard2.0;net452</TargetFrameworks>
+    <Authors>Sergey Konkin</Authors>
+    <Product>InMemoryDb</Product>
+    <Description>Library for storing entire DB tables into memory.</Description>
+    <Copyright>Copyright (c) 2018 Sergey Konkin</Copyright>
+    <PackageLicenseUrl>https://raw.githubusercontent.com/sergeykonkin/InMemoryDb/master/LICENSE</PackageLicenseUrl>
+    <PackageProjectUrl>https://github.com/sergeykonkin/InMemoryDb</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/sergeykonkin/InMemoryDb</RepositoryUrl>
+    <PackageTags>C# SqlServer InMemory</PackageTags>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)'=='Release'">
+    <DocumentationFile>bin\$(Configuration)\$(TargetFramework)\InMemoryDb.xml</DocumentationFile>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+  </PropertyGroup>
+  <ItemGroup Condition="'$(TargetFramework)'=='netstandard2.0'">
+    <PackageReference Include="System.Data.SqlClient" Version="4.5.0" />
+  </ItemGroup>
+</Project>
