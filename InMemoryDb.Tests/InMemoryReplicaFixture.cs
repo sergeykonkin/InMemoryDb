@@ -15,14 +15,14 @@ namespace InMemoryDb.Tests
             var conn = new SqlConnection(Env.ConnectionString);
             var expected = (int)conn.ExecuteScalar("SELECT COUNT(*) FROM [User]");
             var reader = new ContinuousReader<User>(new SqlBatchReader<User>(Env.ConnectionString));
-            var table = new InMemoryReplica<int, User>(reader);
+            var replica = new InMemoryReplica<int, User>(reader);
 
             // Act
             reader.Start();
-            await table.WhenInitialReadFinished();
+            await replica.WhenInitialReadFinished();
 
             // Assert
-            Assert.AreEqual(expected, table.Count);
+            Assert.AreEqual(expected, replica.Count);
         }
 
         [Test]
@@ -32,14 +32,14 @@ namespace InMemoryDb.Tests
             var conn = new SqlConnection(Env.ConnectionString);
             var expected = (int)conn.ExecuteScalar("SELECT COUNT(*) FROM [User]");
             var reader = new ContinuousReader<User>(new SqlBatchReader<User>(Env.ConnectionString));
-            var table = new InMemoryReplica<User>(reader);
+            var replica = new InMemoryReplica<User>(reader);
 
             // Act
             reader.Start();
-            await table.WhenInitialReadFinished();
+            await replica.WhenInitialReadFinished();
 
             // Assert
-            Assert.AreEqual(expected, table.Count);
+            Assert.AreEqual(expected, replica.Count);
         }
 
         [Test]
@@ -49,14 +49,14 @@ namespace InMemoryDb.Tests
             var conn = new SqlConnection(Env.ConnectionString);
             var expected = conn.QuerySingle<User>("SELECT * FROM [User] WHERE [Id] = 1337");
             var reader = new ContinuousReader<User>(new SqlTimestampBatchReader<User>(Env.ConnectionString, "_ts"));
-            var table = new InMemoryReplica<int, User>(reader, user => user.Id);
+            var replica = new InMemoryReplica<int, User>(reader, user => user.Id);
 
             // Act
             reader.Start();
-            await table.WhenInitialReadFinished();
+            await replica.WhenInitialReadFinished();
 
             // Assert
-            Assert.AreEqual(expected, table[1337]);
+            Assert.AreEqual(expected, replica[1337]);
         }
     }
 }
