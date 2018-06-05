@@ -28,7 +28,7 @@ namespace InMemoryDb.Tests
         }
 
         [Test]
-        public void Should_respect_attributes()
+        public void Should_respect_Table_and_Column_attributes()
         {
             // Arrange
             var reader = new SqlBatchReader<User2>(Env.ConnectionString);
@@ -43,6 +43,17 @@ namespace InMemoryDb.Tests
             Assert.IsFalse(actual.All(u => u.Gender2 == false));
             Assert.IsFalse(actual.All(u => u.Gender2 == true));
             Assert.IsTrue(actual.All(u => u.Age2 != 0));
+        }
+
+        [Test]
+        public void Should_respect_Ignore_attribute()
+        {
+            // without [Ignore]
+            Assert.That(() => new SqlBatchReader<User5>(Env.ConnectionString).ReadNextBatch(0).ToList(),
+                Throws.Exception.TypeOf<IndexOutOfRangeException>().With.Message.EqualTo(nameof(User5.FullName)));
+
+            // with[Ignore]
+            Assert.DoesNotThrow(() => new SqlBatchReader<User6>(Env.ConnectionString).ReadNextBatch(0).ToList());
         }
 
         [Test]

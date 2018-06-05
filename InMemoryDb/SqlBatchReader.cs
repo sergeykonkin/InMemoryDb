@@ -90,7 +90,9 @@ ORDER BY {rowKeyColumn} ASC";
         {
             var result = new TValue();
             var type = typeof(TValue);
-            var props = type.GetProperties(BindingFlags.Public | BindingFlags.Instance);
+            var props = type.GetProperties(BindingFlags.Public | BindingFlags.Instance)
+                .Where(p => p.GetCustomAttribute<IgnoreAttribute>() == null);
+
             foreach (var prop in props)
             {
                 var columnName = prop.GetCustomAttribute<ColumnAttribute>()?.Name ?? prop.Name;
