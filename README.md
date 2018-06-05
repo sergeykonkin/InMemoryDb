@@ -4,9 +4,11 @@
 
 # Your DB fits in RAM
 
-This library allows to store entire table in memory and keep it updated. `IContinuousReader` type performs continuous reading and `InMemoryTableReplica` uses it and stores data in strong-typed collection.
+This library allows to store remote data in RAM and keep it updated indefinitely. `IContinuousReader` type performs continuous reading and `InMemoryReplica` uses it and stores data in strong-typed collection.
 
 ## Usage
+
+For now there is only SQL Server implementation.
 
 Table:
 ```sql
@@ -31,19 +33,21 @@ public class User
 ```
 Usage:
 ```csharp
-var reader = new SqlContinuousReader<int, User>(connectionString);
-var table = new InMemoryTableReplica<int, User>(reader);
+var reader = new ContinuousReader<User>(new SqlBatchReader<User>(connectionString));
+var replica = new InMemoryReplica<int, User>(reader);
 reader.Start();
-await reader.WhenInitialReadFinished(); // or -> await table.WhenInitialReadFinished();
+await reader.WhenInitialReadFinished(); // or -> await replica.WhenInitialReadFinished();
 
-// InMemoryTableReplica<TKey, TValue> implements IReadOnlyDictionary<TKey, TValue>:
-var count = table.Count;
-if (table.ContainsKey(5))
+// InMemoryReplica<TKey, TValue> implements IReadOnlyDictionary<TKey, TValue>:
+var count = replica.Count;
+if (replica.ContainsKey(5))
 {
-    var user = table[5];
+    var user = replica[5];
 }
 ...
 ```
+
+This will create in-memory replica of origin table and will keep it updated.
 ### Under the hood
 Reader will start reading using following script:
 ```sql
@@ -68,7 +72,7 @@ ALTER TABLE [User]
 Usage:
 ```csharp
 var reader = new SqlContinuousTimestampReader<User>(connectionString);
-var table = new InMemoryTableReplica<int, User>(reader, user => user.Id);
+var table = new InMemoryReplica<int, User>(reader, user => user.Id);
 ...
 ```
 This approach will read data depending on current value of `[_ts]` column (which is updated on each insert/update) and build in-memory collection with keys of user IDs.
@@ -94,6 +98,12 @@ public string FirstName { get; set; }
 ```csharp
 [RowKey]
 public int Foo { get; set; }
+```
+
+4. Ignore property
+```csharp
+[Ignore]
+public string FullName => $"{FirstName} {LastName}";
 ```
 
 ## License
