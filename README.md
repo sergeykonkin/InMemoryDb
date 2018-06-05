@@ -83,7 +83,7 @@ This approach will read data depending on current value of `[_ts]` column (which
 1. Custom table tame
 
 ```csharp
-[Table("custom_table_name")]
+[OriginName("custom_table_name")]
 public class User
 {
 ...
@@ -91,7 +91,7 @@ public class User
 
 2. Custom column name
 ```csharp
-[Column("custom_column_name")]
+[OriginName("custom_column_name")]
 public string FirstName { get; set; }
 ```
 
