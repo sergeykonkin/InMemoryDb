@@ -71,8 +71,9 @@ ALTER TABLE [User]
 ```
 Usage:
 ```csharp
-var reader = new SqlContinuousTimestampReader<User>(connectionString);
-var table = new InMemoryReplica<int, User>(reader, user => user.Id);
+var reader = new ContinuousReader<User>(new SqlTimestampBatchReader<User>(connectionString));
+var replica = new InMemoryReplica<int, User>(reader, user => user.Id);
+// Since we no longer reading by Id, we need to explicitly specify how to build the local index
 ...
 ```
 This approach will read data depending on current value of `[_ts]` column (which is updated on each insert/update) and build in-memory collection with keys of user IDs.
