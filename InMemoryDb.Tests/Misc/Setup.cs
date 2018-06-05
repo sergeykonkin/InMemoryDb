@@ -1,4 +1,4 @@
-﻿using System.Data.SqlClient;
+using System.Data.SqlClient;
 using Bogus;
 using Bogus.DataSets;
 using Dapper;
@@ -22,7 +22,6 @@ namespace InMemoryDb.Tests
         [OneTimeTearDown]
         public void AfterAllTest()
         {
-            Cleanup();
             _db?.Dispose();
         }
 
@@ -64,14 +63,6 @@ CREATE TABLE [User] (
                           VALUES (@firstName, @lastName, @age, @gender);",
                         userFaker.Generate());
                 }
-            }
-        }
-
-        private void Cleanup()
-        {
-            using (var conn = new SqlConnection(Env.ConnectionString))
-            {
-                conn.Execute("DROP TABLE [User]");
             }
         }
     }
