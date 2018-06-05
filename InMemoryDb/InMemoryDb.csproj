@@ -10,7 +10,7 @@
   <PropertyGroup>
     <Authors>Sergey Konkin</Authors>
     <Product>InMemoryDb</Product>
-    <Description>Library for storing entire DB tables into memory.</Description>
+    <Description>Library for storing up-to-date data replicas in memory.</Description>
     <Copyright>Copyright (c) 2018 Sergey Konkin</Copyright>
     <PackageLicenseUrl>https://raw.githubusercontent.com/sergeykonkin/InMemoryDb/master/LICENSE</PackageLicenseUrl>
     <PackageProjectUrl>https://github.com/sergeykonkin/InMemoryDb</PackageProjectUrl>
