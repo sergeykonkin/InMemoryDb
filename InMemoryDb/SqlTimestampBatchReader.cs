@@ -9,6 +9,8 @@ namespace InMemoryDb
     public class SqlTimestampBatchReader<TValue> : SqlBatchReader<TValue>
         where TValue : new()
     {
+        private readonly string _timestampColumnName;
+
         /// <inheritdoc />
         /// <summary>
         /// Initializes new instance of <see cref="SqlTimestampBatchReader{TValue}" />
@@ -24,11 +26,14 @@ namespace InMemoryDb
             int batchSize = 1000)
             : base(connectionString, commandTimeout, batchSize)
         {
-            RowKeyColumnName = timestampColumnName ?? throw new ArgumentNullException(nameof(timestampColumnName));
+            _timestampColumnName = timestampColumnName ?? throw new ArgumentNullException(nameof(timestampColumnName));
         }
 
         /// <inheritdoc />
-        protected override string RowKeyColumnName { get; }
+        protected override string GetRowKeyColumnName()
+        {
+            return _timestampColumnName;
+        }
 
         /// <inheritdoc />
         protected override object ConvertToSql(IComparable rowKey)

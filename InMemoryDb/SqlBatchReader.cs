@@ -18,15 +18,9 @@ namespace InMemoryDb
         private readonly int _commandTimeout;
         private readonly int _batchSize;
 
-        /// <summary>
-        /// Gets the table name to read from.
-        /// </summary>
-        protected virtual string TableName { get; }
-
-        /// <summary>
-        /// Gets the Row Key column name.
-        /// </summary>
-        protected virtual string RowKeyColumnName { get; }
+        private bool _isInitialized;
+        private string _tableName;
+        private string _rowKeyColumnName;
 
         /// <summary>
         /// Initializes new instance of <see cref="SqlBatchReader{TValue}"/>
@@ -41,21 +35,20 @@ namespace InMemoryDb
             _commandTimeout = commandTimeout;
             if (batchSize <= 0) throw new ArgumentOutOfRangeException(nameof(batchSize));
             _batchSize = batchSize;
-
-            TableName = GetTableName();
-            RowKeyColumnName = GetRowKeyColumnName();
         }
 
         /// <inheritdoc />
         public virtual IEnumerable<Tuple<IComparable, TValue>> ReadNextBatch(IComparable from)
         {
+            Init();
+
             using (SqlConnection conn = new SqlConnection(_connectionString))
             using (SqlCommand cmd = conn.CreateCommand())
             {
                 conn.Open();
 
-                var rowKeyColumn = FixSqlObjectName(RowKeyColumnName);
-                var table = FixSqlObjectName(TableName);
+                var rowKeyColumn = FixSqlObjectName(_rowKeyColumnName);
+                var table = FixSqlObjectName(_tableName);
 
                 cmd.CommandText =
                     $@"
@@ -100,7 +93,7 @@ ORDER BY {rowKeyColumn} ASC";
                 prop.SetValue(result, value);
             }
 
-            rowKey = ConvertFromSql(row[RowKeyColumnName]);
+            rowKey = ConvertFromSql(row[_rowKeyColumnName]);
             return result;
         }
 
@@ -125,10 +118,24 @@ ORDER BY {rowKeyColumn} ASC";
         }
 
         /// <summary>
+        /// Performs one-time initialization.
+        /// </summary>
+        protected virtual void Init()
+        {
+            if (_isInitialized)
+                return;
+
+            _tableName = GetTableName();
+            _rowKeyColumnName = GetRowKeyColumnName();
+
+            _isInitialized = true;
+        }
+
+        /// <summary>
         /// Gets the name of the table to read data from.
         /// </summary>
         /// <returns>TableName name.</returns>
-        private static string GetTableName()
+        protected virtual string GetTableName()
         {
             Type type = typeof(TValue);
             return type.GetCustomAttribute<TableAttribute>()?.Name ?? type.Name;
@@ -138,7 +145,7 @@ ORDER BY {rowKeyColumn} ASC";
         /// Gets the name of the row key column.
         /// </summary>
         /// <returns>Row key column name.</returns>
-        private static string GetRowKeyColumnName()
+        protected virtual string GetRowKeyColumnName()
         {
             var type = typeof(TValue);
             var props = type.GetProperties(BindingFlags.Public | BindingFlags.Instance);

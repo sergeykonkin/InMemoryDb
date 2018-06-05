@@ -23,6 +23,12 @@ namespace InMemoryDb.Tests
         }
 
         [Test]
+        public void Should_not_throw_when_no_RowKey_specified()
+        {
+            Assert.DoesNotThrow(() => new SqlTimestampBatchReader<User3>(Env.ConnectionString, "_ts"));
+        }
+
+        [Test]
         public void Should_throw_on_bad_arguments()
         {
             Assert.That(() => new SqlTimestampBatchReader<User>(null, "_ts"), Throws.ArgumentNullException);

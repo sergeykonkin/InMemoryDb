@@ -59,14 +59,14 @@ namespace InMemoryDb.Tests
         [Test]
         public void Should_throw_on_when_no_RowKey_provided()
         {
-            Assert.That(() => new SqlBatchReader<User3>(Env.ConnectionString),
+            Assert.That(() => new SqlBatchReader<User3>(Env.ConnectionString).ReadNextBatch(0).ToList(),
                 Throws.InvalidOperationException.With.Message.StartsWith("Row key column wasn't specified explicitly"));
         }
 
         [Test]
         public void Should_throw_on_ambiguous_RowKey_attributes()
         {
-            Assert.That(() => new SqlBatchReader<User4>(Env.ConnectionString),
+            Assert.That(() => new SqlBatchReader<User4>(Env.ConnectionString).ReadNextBatch(0).ToList(),
                 Throws.InvalidOperationException.With.Message.EqualTo("Ambiguous multiple [RowKey] attributes."));
         }
 
