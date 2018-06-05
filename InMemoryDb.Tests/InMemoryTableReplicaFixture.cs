@@ -14,8 +14,8 @@ namespace InMemoryDb.Tests
             // Arrange
             var conn = new SqlConnection(Env.ConnectionString);
             var expected = (int)conn.ExecuteScalar("SELECT COUNT(*) FROM [User]");
-            var reader = new SqlContinuousReader<int, User>(Env.ConnectionString);
-            var table = new InMemoryTableReplica<int, User>(reader);
+            var reader = new ContinuousReader<User>(new SqlBatchReader<User>(Env.ConnectionString));
+            var table = new InMemoryTableReplica<User>(reader);
 
             // Act
             reader.Start();
@@ -31,7 +31,7 @@ namespace InMemoryDb.Tests
             // Arrange
             var conn = new SqlConnection(Env.ConnectionString);
             var expected = (int)conn.ExecuteScalar("SELECT COUNT(*) FROM [User]");
-            var reader = new SqlContinuousReader<int, User>(Env.ConnectionString);
+            var reader = new ContinuousReader<User>(new SqlBatchReader<User>(Env.ConnectionString));
             var table = new InMemoryTableReplica<User>(reader);
 
             // Act
@@ -48,7 +48,7 @@ namespace InMemoryDb.Tests
             // Arrange
             var conn = new SqlConnection(Env.ConnectionString);
             var expected = conn.QuerySingle<User>("SELECT * FROM [User] WHERE [Id] = 1337");
-            var reader = new SqlContinuousTimestampReader<User>(Env.ConnectionString, "_ts");
+            var reader = new ContinuousReader<User>(new SqlTimestampBatchReader<User>(Env.ConnectionString, "_ts"));
             var table = new InMemoryTableReplica<int, User>(reader, user => user.Id);
 
             // Act

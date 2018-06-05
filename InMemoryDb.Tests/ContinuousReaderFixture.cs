@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Concurrent;
 using System.Data.SqlClient;
 using System.Linq;
@@ -9,19 +9,14 @@ using NUnit.Framework;
 namespace InMemoryDb.Tests
 {
     [TestFixture]
-    public class SqlContinuousReaderFixture
+    public class ContinuousReaderFixture
     {
         [Test]
         public async Task Should_read_all_data()
         {
             // Arrange
-            int expected;
-            using (var conn = new SqlConnection(Env.ConnectionString))
-            {
-                expected = (int) conn.ExecuteScalar("SELECT COUNT(*) FROM [User]");
-            }
-
-            var reader = new SqlContinuousReader<int, User>(Env.ConnectionString);
+            var batchReader = new SqlBatchReader<User>(Env.ConnectionString);
+            var reader = new ContinuousReader<User>(batchReader);
 
             // Act
             int actual = 0;
@@ -30,6 +25,7 @@ namespace InMemoryDb.Tests
             await reader.WhenInitialReadFinished();
 
             // Assert
+            var expected = new SqlConnection(Env.ConnectionString).ExecuteScalar<int>("SELECT COUNT(*) FROM [User]");
             Assert.AreEqual(expected, actual);
         }
 
@@ -37,7 +33,8 @@ namespace InMemoryDb.Tests
         public async Task Should_read_new_data()
         {
             // Arrange
-            var reader = new SqlContinuousReader<int, User>(Env.ConnectionString);
+            var batchReader = new SqlBatchReader<User>(Env.ConnectionString);
+            var reader = new ContinuousReader<User>(batchReader);
 
             // Act
             bool read = false;
@@ -61,10 +58,45 @@ namespace InMemoryDb.Tests
         }
 
         [Test]
+        public async Task Should_read_updated_data()
+        {
+            // Arrange
+            var batchReader = new SqlTimestampBatchReader<User>(Env.ConnectionString, "_ts");
+            var reader = new ContinuousReader<User>(batchReader);
+
+            // Act
+            bool read = false;
+            int id = 0;
+            string newName = null;
+            reader.Start();
+            await reader.WhenInitialReadFinished();
+
+            reader.NewValue += (key, user) =>
+            {
+                read = true;
+                id = user.Id;
+                newName = user.FirstName;
+            };
+
+            new SqlConnection(Env.ConnectionString).Execute(
+                @"UPDATE [User]
+                  SET FirstName = 'Sereja'
+                  WHERE Id = 1488");
+
+            await Task.Delay(400); // doubled default delay (200ms)
+
+            // Assert
+            Assert.IsTrue(read);
+            Assert.AreEqual(1488, id);
+            Assert.AreEqual("Sereja", newName);
+        }
+
+        [Test]
         public async Task Should_respect_attributes()
         {
             // Arrange
-            var reader = new SqlContinuousReader<int, User2>(Env.ConnectionString);
+            var batchReader = new SqlBatchReader<User2>(Env.ConnectionString);
+            var reader = new ContinuousReader<User2>(batchReader);
 
             // Act
             var actual = new ConcurrentBag<User2>();
@@ -82,36 +114,10 @@ namespace InMemoryDb.Tests
         }
 
         [Test]
-        public void Should_throw_on_when_no_RowKey_provided()
-        {
-            // Arrange
-            var reader = new SqlContinuousReader<int, User3>(Env.ConnectionString);
-
-            // Act & Assert
-            Assert.That(() => reader.Start(),
-                Throws.InvalidOperationException.With.Message.StartsWith("Row key column wasn't specified explicitly"));
-        }
-
-        [Test]
-        public void Should_throw_on_ambiguous_RowKey_attributes()
-        {
-            // Arrange
-            var reader = new SqlContinuousReader<int, User4>(Env.ConnectionString);
-
-            // Act & Assert
-            Assert.That(() => reader.Start(),
-                Throws.InvalidOperationException.With.Message.EqualTo("Ambiguous multiple [RowKey] attributes."));
-        }
-
-        [Test]
         public void Should_throw_on_bad_arguments()
         {
-            Assert.That(() => new SqlContinuousReader<int, User>(null), Throws.ArgumentNullException);
-            Assert.That(() => new SqlContinuousReader<int, User>(Env.ConnectionString, batchSize: 0),
-                Throws.Exception.TypeOf(typeof(ArgumentOutOfRangeException)));
-            Assert.That(() => new SqlContinuousReader<int, User>(Env.ConnectionString, delay: 0),
-                Throws.Exception.TypeOf(typeof(ArgumentOutOfRangeException)));
-            Assert.That(() => new SqlContinuousReader<int, User>(Env.ConnectionString, commandTimeout: -1),
+            Assert.That(() => new ContinuousReader<User>(null), Throws.ArgumentNullException);
+            Assert.That(() => new ContinuousReader<User>(new SqlBatchReader<User>(Env.ConnectionString), delay: 0),
                 Throws.Exception.TypeOf(typeof(ArgumentOutOfRangeException)));
         }
     }
