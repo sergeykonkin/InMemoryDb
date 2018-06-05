@@ -1,6 +1,6 @@
 ﻿namespace InMemoryDb.Tests
 {
-    [Table("User")]
+    [OriginName("User")]
     public class User5
     {
         public int Id { get; set; }

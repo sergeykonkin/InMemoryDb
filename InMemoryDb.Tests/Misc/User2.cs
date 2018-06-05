@@ -1,22 +1,22 @@
-namespace InMemoryDb.Tests
+﻿namespace InMemoryDb.Tests
 {
-    [Table("User")]
+    [OriginName("User")]
     public class User2
     {
-        [Column("Id")]
+        [OriginName("Id")]
         [RowKey]
         public int Id2 { get; set; }
 
-        [Column("FirstName")]
+        [OriginName("FirstName")]
         public string FirstName2 { get; set; }
 
-        [Column("LastName")]
+        [OriginName("LastName")]
         public string LastName2 { get; set; }
 
-        [Column("Age")]
+        [OriginName("Age")]
         public int Age2 { get; set; }
 
-        [Column("Gender")]
+        [OriginName("Gender")]
         public bool Gender2 { get; set; }
     }
 }

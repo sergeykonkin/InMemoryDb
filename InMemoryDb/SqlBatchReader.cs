@@ -88,7 +88,7 @@ ORDER BY {rowKeyColumn} ASC";
 
             foreach (var prop in props)
             {
-                var columnName = prop.GetCustomAttribute<ColumnAttribute>()?.Name ?? prop.Name;
+                var columnName = prop.GetCustomAttribute<OriginNameAttribute>()?.Name ?? prop.Name;
                 object value = row[columnName];
                 prop.SetValue(result, value);
             }
@@ -138,7 +138,7 @@ ORDER BY {rowKeyColumn} ASC";
         protected virtual string GetTableName()
         {
             Type type = typeof(TValue);
-            return type.GetCustomAttribute<TableAttribute>()?.Name ?? type.Name;
+            return type.GetCustomAttribute<OriginNameAttribute>()?.Name ?? type.Name;
         }
 
         /// <summary>
@@ -158,7 +158,7 @@ ORDER BY {rowKeyColumn} ASC";
 
             if (rowKeyProps.Length == 1)
             {
-                return rowKeyProps[0].GetCustomAttribute<ColumnAttribute>()?.Name ?? rowKeyProps[0].Name;
+                return rowKeyProps[0].GetCustomAttribute<OriginNameAttribute>()?.Name ?? rowKeyProps[0].Name;
             }
 
             var idProp = props.FirstOrDefault(p => p.Name == "Id");
