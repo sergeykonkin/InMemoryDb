@@ -6,7 +6,7 @@ using NUnit.Framework;
 namespace InMemoryDb.Tests
 {
     [TestFixture]
-    public class InMemoryTableReplicaFixture
+    public class InMemoryReplicaFixture
     {
         [Test]
         public async Task Should_read_all_data_to_dictionary()
@@ -15,7 +15,7 @@ namespace InMemoryDb.Tests
             var conn = new SqlConnection(Env.ConnectionString);
             var expected = (int)conn.ExecuteScalar("SELECT COUNT(*) FROM [User]");
             var reader = new ContinuousReader<User>(new SqlBatchReader<User>(Env.ConnectionString));
-            var table = new InMemoryTableReplica<User>(reader);
+            var table = new InMemoryReplica<int, User>(reader);
 
             // Act
             reader.Start();
@@ -32,7 +32,7 @@ namespace InMemoryDb.Tests
             var conn = new SqlConnection(Env.ConnectionString);
             var expected = (int)conn.ExecuteScalar("SELECT COUNT(*) FROM [User]");
             var reader = new ContinuousReader<User>(new SqlBatchReader<User>(Env.ConnectionString));
-            var table = new InMemoryTableReplica<User>(reader);
+            var table = new InMemoryReplica<User>(reader);
 
             // Act
             reader.Start();
@@ -49,7 +49,7 @@ namespace InMemoryDb.Tests
             var conn = new SqlConnection(Env.ConnectionString);
             var expected = conn.QuerySingle<User>("SELECT * FROM [User] WHERE [Id] = 1337");
             var reader = new ContinuousReader<User>(new SqlTimestampBatchReader<User>(Env.ConnectionString, "_ts"));
-            var table = new InMemoryTableReplica<int, User>(reader, user => user.Id);
+            var table = new InMemoryReplica<int, User>(reader, user => user.Id);
 
             // Act
             reader.Start();

@@ -8,11 +8,11 @@ namespace InMemoryDb
 {
     /// <inheritdoc />
     /// <summary>
-    /// In-memory table representation.
+    /// In-memory replica of origin data source.
     /// </summary>
-    /// <typeparam name="TKey">Type of the table key.</typeparam>
-    /// <typeparam name="TValue">Type of the value.</typeparam>
-    public class InMemoryTableReplica<TKey, TValue> : IReadOnlyDictionary<TKey, TValue>
+    /// <typeparam name="TKey">Type of the data key.</typeparam>
+    /// <typeparam name="TValue">Type of the data value.</typeparam>
+    public class InMemoryReplica<TKey, TValue> : IReadOnlyDictionary<TKey, TValue>
         where TKey : IComparable
         where TValue : new()
     {
@@ -20,11 +20,11 @@ namespace InMemoryDb
         private readonly IDictionary<TKey, TValue> _store;
 
         /// <summary>
-        /// Initializes new instance of <see cref="InMemoryTableReplica{TKey, TValue}"/>
+        /// Initializes new instance of <see cref="InMemoryReplica{TKey,TValue}"/>
         /// </summary>
         /// <param name="reader">Reader of original data source.</param>
         /// <param name="keyFactory">Required when table key and increment row key differs.</param>
-        public InMemoryTableReplica(IContinuousReader<TValue> reader, Func<TValue, TKey> keyFactory = null)
+        public InMemoryReplica(IContinuousReader<TValue> reader, Func<TValue, TKey> keyFactory = null)
         {
             _reader = reader ?? throw new ArgumentNullException(nameof(reader));
 

@@ -8,20 +8,20 @@ namespace InMemoryDb
 {
     /// <inheritdoc />
     /// <summary>
-    /// In-memory table representation.
+    /// In-memory replica of origin data source.
     /// </summary>
-    /// <typeparam name="TValue">Type of the value.</typeparam>
-    public class InMemoryTableReplica<TValue> : IReadOnlyCollection<TValue>
+    /// <typeparam name="TValue">Type of the data value.</typeparam>
+    public class InMemoryReplica<TValue> : IReadOnlyCollection<TValue>
         where TValue : new()
     {
         private readonly IContinuousReader<TValue> _reader;
         private readonly ConcurrentBag<TValue> _store;
 
         /// <summary>
-        /// Initializes new instance of <see cref="InMemoryTableReplica{TValue}"/>
+        /// Initializes new instance of <see cref="InMemoryReplica{TValue}"/>
         /// </summary>
         /// <param name="reader">Reader of original data source.</param>
-        public InMemoryTableReplica(IContinuousReader<TValue> reader)
+        public InMemoryReplica(IContinuousReader<TValue> reader)
         {
             _reader = reader ?? throw new ArgumentNullException(nameof(reader));
 
