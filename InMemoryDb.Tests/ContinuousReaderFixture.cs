@@ -1,7 +1,5 @@
 ﻿using System;
-using System.Collections.Concurrent;
 using System.Data.SqlClient;
-using System.Linq;
 using System.Threading.Tasks;
 using Dapper;
 using NUnit.Framework;
@@ -89,28 +87,6 @@ namespace InMemoryDb.Tests
             Assert.IsTrue(read);
             Assert.AreEqual(1488, id);
             Assert.AreEqual("Sereja", newName);
-        }
-
-        [Test]
-        public async Task Should_respect_attributes()
-        {
-            // Arrange
-            var batchReader = new SqlBatchReader<User2>(Env.ConnectionString);
-            var reader = new ContinuousReader<User2>(batchReader);
-
-            // Act
-            var actual = new ConcurrentBag<User2>();
-            reader.NewValue += (key, user) => actual.Add(user);
-            reader.Start();
-            await reader.WhenInitialReadFinished();
-
-            // Assert
-            Assert.IsTrue(actual.All(u => u.Id2 != 0));
-            Assert.IsTrue(actual.All(u => u.FirstName2 != null));
-            Assert.IsTrue(actual.All(u => u.LastName2 != null));
-            Assert.IsFalse(actual.All(u => u.Gender2 == false));
-            Assert.IsFalse(actual.All(u => u.Gender2 == true));
-            Assert.IsTrue(actual.All(u => u.Age2 != 0));
         }
 
         [Test]

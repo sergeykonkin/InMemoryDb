@@ -28,6 +28,24 @@ namespace InMemoryDb.Tests
         }
 
         [Test]
+        public void Should_respect_attributes()
+        {
+            // Arrange
+            var reader = new SqlBatchReader<User2>(Env.ConnectionString);
+
+            // Act
+            var actual = reader.ReadNextBatch(0).Select(t => t.Item2).ToList();
+
+            // Assert
+            Assert.IsTrue(actual.All(u => u.Id2 != 0));
+            Assert.IsTrue(actual.All(u => u.FirstName2 != null));
+            Assert.IsTrue(actual.All(u => u.LastName2 != null));
+            Assert.IsFalse(actual.All(u => u.Gender2 == false));
+            Assert.IsFalse(actual.All(u => u.Gender2 == true));
+            Assert.IsTrue(actual.All(u => u.Age2 != 0));
+        }
+
+        [Test]
         public void Should_throw_on_when_no_RowKey_provided()
         {
             Assert.That(() => new SqlBatchReader<User3>(Env.ConnectionString),
