@@ -3,10 +3,10 @@
 namespace InMemoryDb
 {
     /// <summary>
-    /// Allows specifying the origin data identificator.
+    /// Allows specifying the SQL table name (including schema).
     /// </summary>
-    [AttributeUsage(AttributeTargets.Class | AttributeTargets.Property)]
-    public class OriginNameAttribute : Attribute
+    [AttributeUsage(AttributeTargets.Class)]
+    public class TableAttribute : Attribute
     {
         /// <summary>
         /// Gets the table name.
@@ -14,10 +14,10 @@ namespace InMemoryDb
         public string Name { get; }
 
         /// <summary>
-        /// Initializes new instance of <see cref="OriginNameAttribute"/>
+        /// Initializes new instance of <see cref="TableAttribute" />
         /// </summary>
         /// <param name="name">Table name.</param>
-        public OriginNameAttribute(string name)
+        public TableAttribute(string name)
         {
             Name = name ?? throw new ArgumentNullException(nameof(name));
         }

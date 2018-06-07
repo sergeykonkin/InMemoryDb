@@ -17,7 +17,7 @@ namespace InMemoryDb
         where TValue : new()
     {
         private readonly IContinuousReader<TValue> _reader;
-        private readonly IDictionary<TKey, TValue> _store;
+        protected IDictionary<TKey, TValue> Store { get; }
 
         /// <summary>
         /// Initializes new instance of <see cref="InMemoryReplica{TKey,TValue}"/>
@@ -28,7 +28,7 @@ namespace InMemoryDb
         {
             _reader = reader ?? throw new ArgumentNullException(nameof(reader));
 
-            _store = new ConcurrentDictionary<TKey, TValue>();
+            Store = new ConcurrentDictionary<TKey, TValue>();
 
             TKey GetKey(IComparable rowKey, TValue value)
             {
@@ -40,7 +40,7 @@ namespace InMemoryDb
                 return (TKey) rowKey;
             }
 
-            _reader.NewValue += (rowKey, value) => _store[GetKey(rowKey, value)] = value;
+            _reader.NewValue += (rowKey, value) => Store[GetKey(rowKey, value)] = value;
         }
 
         /// <summary>
@@ -54,37 +54,37 @@ namespace InMemoryDb
         /// <inheritdoc />
         public IEnumerator<KeyValuePair<TKey, TValue>> GetEnumerator()
         {
-            return _store.GetEnumerator();
+            return Store.GetEnumerator();
         }
 
         /// <inheritdoc />
         IEnumerator IEnumerable.GetEnumerator()
         {
-            return ((IEnumerable) _store).GetEnumerator();
+            return ((IEnumerable) Store).GetEnumerator();
         }
 
         /// <inheritdoc />
-        public int Count => _store.Count;
+        public int Count => Store.Count;
 
         /// <inheritdoc />
         public bool ContainsKey(TKey key)
         {
-            return _store.ContainsKey(key);
+            return Store.ContainsKey(key);
         }
 
         /// <inheritdoc />
         public bool TryGetValue(TKey key, out TValue value)
         {
-            return _store.TryGetValue(key, out value);
+            return Store.TryGetValue(key, out value);
         }
 
         /// <inheritdoc />
-        public TValue this[TKey key] => _store[key];
+        public TValue this[TKey key] => Store[key];
 
         /// <inheritdoc />
-        public IEnumerable<TKey> Keys => _store.Keys;
+        public IEnumerable<TKey> Keys => Store.Keys;
 
         /// <inheritdoc />
-        public IEnumerable<TValue> Values => _store.Values;
+        public IEnumerable<TValue> Values => Store.Values;
     }
 }

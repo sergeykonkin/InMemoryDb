@@ -1,55 +1,27 @@
-﻿using System;
-using System.Collections;
-using System.Collections.Concurrent;
-using System.Collections.Generic;
-using System.Threading.Tasks;
+﻿using System.Collections.Generic;
 
 namespace InMemoryDb
 {
-    /// <inheritdoc />
+    /// <inheritdoc cref="InMemoryReplica{TKey,TValue}"/>
     /// <summary>
     /// In-memory replica of origin data source.
     /// </summary>
     /// <typeparam name="TValue">Type of the data value.</typeparam>
-    public class InMemoryReplica<TValue> : IReadOnlyCollection<TValue>
+    public class InMemoryReplica<TValue> : InMemoryReplica<int, TValue>, IReadOnlyCollection<TValue>
         where TValue : new()
     {
-        private readonly IContinuousReader<TValue> _reader;
-        private readonly ConcurrentBag<TValue> _store;
-
-        /// <summary>
-        /// Initializes new instance of <see cref="InMemoryReplica{TValue}"/>
-        /// </summary>
-        /// <param name="reader">Reader of original data source.</param>
         public InMemoryReplica(IContinuousReader<TValue> reader)
+            : base(reader, x => x.GetHashCode())
         {
-            _reader = reader ?? throw new ArgumentNullException(nameof(reader));
-
-            _store = new ConcurrentBag<TValue>();
-            _reader.NewValue += (key, value) => _store.Add(value);
         }
 
-        /// <summary>
-        /// Returns the task that will be completed when initial data read is finished.
-        /// </summary>
-        public Task WhenInitialReadFinished()
-        {
-            return _reader.WhenInitialReadFinished();
-        }
+        #region Implementation of IEnumerable<out TValue>
 
-        /// <inheritdoc />
         public IEnumerator<TValue> GetEnumerator()
         {
-            return _store.GetEnumerator();
+            return Store.Values.GetEnumerator();
         }
 
-        /// <inheritdoc />
-        IEnumerator IEnumerable.GetEnumerator()
-        {
-            return ((IEnumerable) _store).GetEnumerator();
-        }
-
-        /// <inheritdoc />
-        public int Count => _store.Count;
+        #endregion
     }
 }

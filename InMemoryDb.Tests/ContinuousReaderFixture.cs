@@ -13,8 +13,7 @@ namespace InMemoryDb.Tests
         public async Task Should_read_all_data()
         {
             // Arrange
-            var batchReader = new SqlBatchReader<User>(Env.ConnectionString);
-            var reader = new ContinuousReader<User>(batchReader);
+            var reader = new ContinuousReader<User>(new SqlTimestampReader<User>(Env.ConnectionString));
 
             // Act
             int actual = 0;
@@ -31,8 +30,7 @@ namespace InMemoryDb.Tests
         public async Task Should_read_new_data()
         {
             // Arrange
-            var batchReader = new SqlBatchReader<User>(Env.ConnectionString);
-            var reader = new ContinuousReader<User>(batchReader);
+            var reader = new ContinuousReader<User>(new SqlTimestampReader<User>(Env.ConnectionString));
 
             // Act
             bool read = false;
@@ -59,8 +57,7 @@ namespace InMemoryDb.Tests
         public async Task Should_read_updated_data()
         {
             // Arrange
-            var batchReader = new SqlTimestampBatchReader<User>(Env.ConnectionString, "_ts");
-            var reader = new ContinuousReader<User>(batchReader);
+            var reader = new ContinuousReader<User>(new SqlTimestampReader<User>(Env.ConnectionString));
 
             // Act
             bool read = false;
@@ -93,7 +90,7 @@ namespace InMemoryDb.Tests
         public void Should_throw_on_bad_arguments()
         {
             Assert.That(() => new ContinuousReader<User>(null), Throws.ArgumentNullException);
-            Assert.That(() => new ContinuousReader<User>(new SqlBatchReader<User>(Env.ConnectionString), delay: 0),
+            Assert.That(() => new ContinuousReader<User>(new SqlTimestampReader<User>(Env.ConnectionString), delay: 0),
                 Throws.Exception.TypeOf(typeof(ArgumentOutOfRangeException)));
         }
     }

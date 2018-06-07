@@ -1,30 +1,28 @@
 ﻿using System;
-using System.Linq;
 using System.Threading.Tasks;
 
 namespace InMemoryDb
 {
     /// <inheritdoc />
     /// <summary>
-    /// Provides functionality to continuously and incrementally read data from origin data source and map records to <typeparamref name="TValue" /> <see cref="T:System.Type" />.
+    /// Provides functionality to continuously and incrementally read data from origin data source and map records to <typeparamref name="TValue" /> <see cref="Type"/>.
     /// </summary>
     /// <typeparam name="TValue">Type of value data should be mapped to.</typeparam>
     public class ContinuousReader<TValue> : IContinuousReader<TValue>
         where TValue : new()
     {
-        private readonly IBatchReader<TValue> _batchReader;
-        private readonly Type _rowKeyType;
+        private readonly IOriginReader<TValue> _originReader;
         private readonly int _delay;
         private readonly TaskCompletionSource<bool> _initialReadFinishedSource;
 
         /// <summary>
-        /// Initializes new instance of <see cref="ContinuousReader{TValue}"/>
+        /// Initializes new instance of <see cref="ContinuousReader{TKey,TValue}"/>
         /// </summary>
-        /// <param name="batchReader">Data source batch reader.</param>
+        /// <param name="originReader">Origin data source reader.</param>
         /// <param name="delay">Delay (in milliseconds) between two requests when reader continuously polling origin data source.</param>
-        public ContinuousReader(IBatchReader<TValue> batchReader, int delay = 200)
+        public ContinuousReader(IOriginReader<TValue> originReader, int delay = 200)
         {
-            _batchReader = batchReader ?? throw new ArgumentNullException(nameof(batchReader));
+            _originReader = originReader ?? throw new ArgumentNullException(nameof(originReader));
             if (delay <= 0) throw new ArgumentOutOfRangeException(nameof(delay));
             _delay = delay;
             _initialReadFinishedSource = new TaskCompletionSource<bool>();
@@ -66,28 +64,26 @@ namespace InMemoryDb
         {
             Task.Run(async () =>
             {
-                IComparable rowKey = 0;// (IComparable)Activator.CreateInstance(_rowKeyType);
+                var since = (IComparable) Activator.CreateInstance(_originReader.RowKeyType);
                 while (true)
                 {
-                    var results = _batchReader.ReadNextBatch(rowKey).ToList();
-                    if (results.Count == 0)
-                    {
-                        if (!IsInitialReadFinished)
-                        {
-                            IsInitialReadFinished = true;
-                            OnInitialReadFinished();
-                        }
-
-                        await Task.Delay(_delay);
-                        continue;
-                    }
-
-                    foreach (var tuple in results)
+                    foreach (var tuple in _originReader.Read(since))
                     {
                         OnNewValue(tuple.Item1, tuple.Item2);
+
+                        if (tuple.Item1.CompareTo(since) > 0)
+                        {
+                            since = tuple.Item1;
+                        }
                     }
 
-                    rowKey = results.Select(t => t.Item1).Max();
+                    if (!IsInitialReadFinished)
+                    {
+                        IsInitialReadFinished = true;
+                        OnInitialReadFinished();
+                    }
+
+                    await Task.Delay(_delay);
                 }
             });
         }

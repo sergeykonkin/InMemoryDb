@@ -1,4 +1,4 @@
-using System.Data.SqlClient;
+﻿using System.Data.SqlClient;
 using Bogus;
 using Bogus.DataSets;
 using Dapper;
@@ -39,7 +39,7 @@ CREATE TABLE [User] (
     LastName nvarchar(250),
     Age int,
     Gender bit,
-    [_ts] rowversion
+    [Timestamp] rowversion
 )");
             }
         }
