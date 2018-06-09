@@ -1,8 +1,22 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "InMemoryDb", "InMemoryDb\InMemoryDb.csproj", "{A5EE40E8-59CA-4AB7-9995-5DCC318BACEC}"
+# Visual Studio 15
+VisualStudioVersion = 15.0.27703.2018
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "InMemoryDb", "InMemoryDb\InMemoryDb.csproj", "{A5EE40E8-59CA-4AB7-9995-5DCC318BACEC}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "InMemoryDb.Tests", "InMemoryDb.Tests\InMemoryDb.Tests.csproj", "{214E961D-7ABC-43D3-BFE4-1689C0E42F54}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "InMemoryDb.Tests", "InMemoryDb.Tests\InMemoryDb.Tests.csproj", "{214E961D-7ABC-43D3-BFE4-1689C0E42F54}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{1D0D99EC-70D9-403E-A61E-6D5B82BF5C55}"
+	ProjectSection(SolutionItems) = preProject
+		.editorconfig = .editorconfig
+		.gitattributes = .gitattributes
+		.gitignore = .gitignore
+		appveyor.yml = appveyor.yml
+		LICENSE = LICENSE
+		README.md = README.md
+		semver.txt = semver.txt
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -18,5 +32,11 @@ Global
 		{214E961D-7ABC-43D3-BFE4-1689C0E42F54}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{214E961D-7ABC-43D3-BFE4-1689C0E42F54}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{214E961D-7ABC-43D3-BFE4-1689C0E42F54}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {D5402A2A-35C1-4362-88F7-FB5A9FD365E5}
 	EndGlobalSection
 EndGlobal
