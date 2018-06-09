@@ -1,4 +1,6 @@
-﻿namespace InMemoryDb.Tests
+﻿using System.ComponentModel.DataAnnotations.Schema;
+
+namespace InMemoryDb.Tests
 {
     [Table("User")]
     public class User3

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations.Schema;
 using System.Data;
 using System.Data.SqlClient;
 using System.Linq;
@@ -115,7 +116,7 @@ ORDER BY {timestampColumn} ASC";
             var result = new TValue();
             var type = typeof(TValue);
             var props = type.GetProperties(BindingFlags.Public | BindingFlags.Instance)
-                .Where(p => p.GetCustomAttribute<IgnoreAttribute>() == null);
+                .Where(p => p.GetCustomAttribute<NotMappedAttribute>() == null);
 
             foreach (var prop in props)
             {

@@ -12,6 +12,7 @@
     <PackageReference Include="RimDev.Automation.Sql" Version="0.5.0" />
   </ItemGroup>
   <ItemGroup>
+    <Reference Include="System.ComponentModel.DataAnnotations" />
     <ProjectReference Include="..\InMemoryDb\InMemoryDb.csproj" />
   </ItemGroup>
 </Project>

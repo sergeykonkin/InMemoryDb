@@ -1,4 +1,6 @@
-﻿namespace InMemoryDb.Tests
+﻿using System.ComponentModel.DataAnnotations.Schema;
+
+namespace InMemoryDb.Tests
 {
     [Table("User")]
     public class User4
@@ -9,7 +11,7 @@
         public int Age { get; set; }
         public bool Gender { get; set; }
 
-        [Ignore]
+        [NotMapped]
         public string FullName => $"{FirstName} {LastName}";
     }
 }
