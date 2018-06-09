@@ -14,11 +14,11 @@ namespace InMemoryDb
     public class SqlTimestampReader<TValue> : IOriginReader<TValue>
         where TValue : new()
     {
-        private readonly string _connectionString;
-        private readonly string _timestampColumnName;
-        private readonly int _commandTimeout;
-        private readonly int _batchSize;
-        private readonly string _tableName;
+        protected readonly string ConnectionString;
+        protected readonly string TimestampColumnName;
+        protected readonly int CommandTimeout;
+        protected readonly int BatchSize;
+        protected readonly string TableName;
 
         public Type RowKeyType { get; } = typeof(ulong);
 
@@ -35,46 +35,33 @@ namespace InMemoryDb
             int commandTimeout = 30,
             int batchSize = 1000)
         {
-            _connectionString = connectionString ?? throw new ArgumentNullException(nameof(connectionString));
-            _timestampColumnName = timestampColumnName ?? throw new ArgumentNullException(nameof(timestampColumnName));
+            ConnectionString = connectionString ?? throw new ArgumentNullException(nameof(connectionString));
+            TimestampColumnName = timestampColumnName ?? throw new ArgumentNullException(nameof(timestampColumnName));
             if (commandTimeout < 0) throw new ArgumentOutOfRangeException(nameof(commandTimeout));
-            _commandTimeout = commandTimeout;
+            CommandTimeout = commandTimeout;
             if (batchSize <= 0) throw new ArgumentOutOfRangeException(nameof(batchSize));
-            _batchSize = batchSize;
+            BatchSize = batchSize;
 
             var type = typeof(TValue);
-            _tableName = type.GetCustomAttribute<TableAttribute>()?.Name ?? type.Name;
+            TableName = type.GetCustomAttribute<TableAttribute>()?.Name ?? type.Name;
         }
 
         /// <inheritdoc />
         public virtual IEnumerable<Tuple<IComparable, TValue>> Read(IComparable since)
         {
-            using (SqlConnection conn = new SqlConnection(_connectionString))
+            using (SqlConnection connection = new SqlConnection(ConnectionString))
             {
-                conn.Open();
+                connection.Open();
 
                 var timestamp = (ulong)since;
                 while (true)
                 {
-                    using (SqlCommand cmd = conn.CreateCommand())
+                    using (SqlCommand command = CreateCommand(timestamp))
                     {
-                        var table = FixSqlObjectName(_tableName);
-                        var timestampColumn = FixSqlObjectName(_timestampColumnName);
-
-                        cmd.CommandText =
-                            $@"
-SELECT TOP (@batchSize)
-    *
-FROM {table}
-WHERE {timestampColumn} > @timestamp
-ORDER BY {timestampColumn} ASC";
-
-                        cmd.CommandTimeout = _commandTimeout;
-                        cmd.Parameters.Add(new SqlParameter("batchSize", _batchSize));
-                        cmd.Parameters.Add(new SqlParameter("timestamp", ConvertToBytes(timestamp)));
-
-                        using (SqlDataReader reader = cmd.ExecuteReader())
+                        command.Connection = connection;
+                        using (SqlDataReader reader = command.ExecuteReader())
                         {
+
                             if (!reader.HasRows)
                                 break;
 
@@ -88,6 +75,33 @@ ORDER BY {timestampColumn} ASC";
                     }
                 }
             }
+        }
+
+        /// <summary>
+        /// Creates SQL command for data retrieval.
+        /// </summary>
+        /// <param name="timestamp">Timestamp to read since.</param>
+        /// <returns>SQL command object ready for execution.</returns>
+        protected virtual SqlCommand CreateCommand(ulong timestamp)
+        {
+            var command = new SqlCommand();
+
+            var table = FixSqlObjectName(TableName);
+            var timestampColumn = FixSqlObjectName(TimestampColumnName);
+
+            command.CommandText =
+                $@"
+SELECT TOP (@batchSize)
+    *
+FROM {table}
+WHERE {timestampColumn} > @timestamp
+ORDER BY {timestampColumn} ASC";
+
+            command.CommandTimeout = CommandTimeout;
+            command.Parameters.Add(new SqlParameter("batchSize", BatchSize));
+            command.Parameters.Add(new SqlParameter("timestamp", ConvertToBytes(timestamp)));
+
+            return command;
         }
 
         /// <summary>
@@ -110,11 +124,11 @@ ORDER BY {timestampColumn} ASC";
                 prop.SetValue(result, value);
             }
 
-            rowTimestamp = ConvertToUInt64((byte[]) row[_timestampColumnName]);
+            rowTimestamp = ConvertToUInt64((byte[]) row[TimestampColumnName]);
             return result;
         }
 
-        private static string FixSqlObjectName(string name)
+        protected static string FixSqlObjectName(string name)
         {
             var parts = name.Split('.');
             var fixedParts = parts.Select(p => p.Trim('[', ']', ' ')).Select(p => $"[{p}]");
