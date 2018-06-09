@@ -41,7 +41,7 @@ namespace InMemoryDb.Tests
         }
 
         [Test]
-        public void Should_respect_Ignore_attribute()
+        public void Should_respect_NotMapped_attribute()
         {
             // without [Ignore]
             Assert.That(() => new SqlTimestampReader<User3>(Env.ConnectionString).Read(0ul).ToList(),
