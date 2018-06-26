@@ -26,6 +26,11 @@ namespace InMemoryDb
         event Action<IComparable, TValue> NewValue;
 
         /// <summary>
+        /// Occurs when value has been deleted from origin data source.
+        /// </summary>
+        event Action<IComparable, TValue> DeletedValue;
+
+        /// <summary>
         /// Occurs when initial data read is finished.
         /// </summary>
         event Action InitialReadFinished;

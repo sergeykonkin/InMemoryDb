@@ -41,6 +41,7 @@ namespace InMemoryDb
             }
 
             _reader.NewValue += (rowKey, value) => Store[GetKey(rowKey, value)] = value;
+            _reader.DeletedValue += (rowKey, value) => Store.Remove(GetKey(rowKey, value));
         }
 
         /// <summary>

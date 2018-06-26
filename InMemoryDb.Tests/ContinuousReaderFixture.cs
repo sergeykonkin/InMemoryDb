@@ -76,14 +76,51 @@ namespace InMemoryDb.Tests
             new SqlConnection(Env.ConnectionString).Execute(
                 @"UPDATE [User]
                   SET FirstName = 'Sereja'
-                  WHERE Id = 1488");
+                  WHERE Id = 1337");
 
             await Task.Delay(400); // doubled default delay (200ms)
 
             // Assert
             Assert.IsTrue(read);
-            Assert.AreEqual(1488, id);
+            Assert.AreEqual(1337, id);
             Assert.AreEqual("Sereja", newName);
+        }
+
+        [Test]
+        public async Task Should_read_deleted_data()
+        {
+            // Arrange
+            var reader = new ContinuousReader<User>(new SqlTimestampReader<User>(Env.ConnectionString));
+
+            // Act
+            bool newValueRead = false;
+            bool deletedValueRead = false;
+            int deletedId = 0;
+            reader.Start();
+            await reader.WhenInitialReadFinished();
+
+            reader.NewValue += (key, user) =>
+            {
+                newValueRead = true;
+            };
+
+            reader.DeletedValue += (key, user) =>
+            {
+                deletedValueRead = true;
+                deletedId = user.Id;
+            };
+
+            new SqlConnection(Env.ConnectionString).Execute(
+                @"UPDATE [User]
+                  SET Deleted = 1
+                  WHERE Id = 5555");
+
+            await Task.Delay(400); // doubled default delay (200ms)
+
+            // Assert
+            Assert.IsFalse(newValueRead);
+            Assert.IsTrue(deletedValueRead);
+            Assert.AreEqual(5555, deletedId);
         }
 
         [Test]

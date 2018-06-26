@@ -43,11 +43,11 @@ namespace InMemoryDb.Tests
         [Test]
         public void Should_respect_NotMapped_attribute()
         {
-            // without [Ignore]
+            // without [NotMapped]
             Assert.That(() => new SqlTimestampReader<User3>(Env.ConnectionString).Read(0ul).ToList(),
                 Throws.Exception.TypeOf<IndexOutOfRangeException>().With.Message.EqualTo(nameof(User3.FullName)));
 
-            // with[Ignore]
+            // with[NotMapped]
             Assert.DoesNotThrow(() => new SqlTimestampReader<User4>(Env.ConnectionString).Read(0ul).ToList());
         }
 
@@ -55,7 +55,7 @@ namespace InMemoryDb.Tests
         public void Should_throw_on_bad_arguments()
         {
             Assert.That(() => new SqlTimestampReader<User>(null), Throws.ArgumentNullException);
-            Assert.That(() => new SqlTimestampReader<User>(Env.ConnectionString, null), Throws.ArgumentNullException);
+            Assert.That(() => new SqlTimestampReader<User>(Env.ConnectionString, timestampColumnName: null), Throws.ArgumentNullException);
             Assert.That(() => new SqlTimestampReader<User>(Env.ConnectionString, commandTimeout: -1),
                 Throws.Exception.TypeOf<ArgumentOutOfRangeException>());
             Assert.That(() => new SqlTimestampReader<User>(Env.ConnectionString, batchSize: 0),

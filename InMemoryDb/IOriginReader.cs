@@ -21,6 +21,6 @@ namespace InMemoryDb
         /// </summary>
         /// <param name="since">Row Key to read since.</param>
         /// <returns>Next batch of values with their row keys.</returns>
-        IEnumerable<Tuple<IComparable, TValue>> Read(IComparable since);
+        IEnumerable<Tuple<IComparable, TValue, bool>> Read(IComparable since);
     }
 }

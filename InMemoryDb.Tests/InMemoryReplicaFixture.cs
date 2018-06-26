@@ -19,10 +19,11 @@ namespace InMemoryDb.Tests
             // Act
             reader.Start();
             await replica.WhenInitialReadFinished();
+            var actual = replica.Count;
 
             // Assert
-            var expected = conn.ExecuteScalar<int>("SELECT COUNT(*) FROM [User]");
-            Assert.AreEqual(expected, replica.Count);
+            var expected = conn.ExecuteScalar<int>("SELECT COUNT(*) FROM [User] WHERE Deleted = 0");
+            Assert.AreEqual(expected, actual);
         }
 
         [Test]
@@ -36,10 +37,11 @@ namespace InMemoryDb.Tests
             // Act
             reader.Start();
             await replica.WhenInitialReadFinished();
+            var actual = replica.Count;
 
             // Assert
-            var expected = conn.ExecuteScalar<int>("SELECT COUNT(*) FROM [User]");
-            Assert.AreEqual(expected, replica.Count);
+            var expected = conn.ExecuteScalar<int>("SELECT COUNT(*) FROM [User] WHERE Deleted = 0");
+            Assert.AreEqual(expected, actual);
         }
 
         [Test]

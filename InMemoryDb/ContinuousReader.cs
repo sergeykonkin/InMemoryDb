@@ -46,6 +46,12 @@ namespace InMemoryDb
 
         /// <inheritdoc />
         /// <summary>
+        /// Occurs when value has been deleted from origin data source.
+        /// </summary>
+        public event Action<IComparable, TValue> DeletedValue;
+
+        /// <inheritdoc />
+        /// <summary>
         /// Occurs when initial data read is finished.
         /// </summary>
         public event Action InitialReadFinished;
@@ -69,7 +75,14 @@ namespace InMemoryDb
                 {
                     foreach (var tuple in _originReader.Read(since))
                     {
-                        OnNewValue(tuple.Item1, tuple.Item2);
+                        if (tuple.Item3)
+                        {
+                            OnDeletedValue(tuple.Item1, tuple.Item2);
+                        }
+                        else
+                        {
+                            OnNewValue(tuple.Item1, tuple.Item2);
+                        }
 
                         if (tuple.Item1.CompareTo(since) > 0)
                         {
@@ -96,6 +109,16 @@ namespace InMemoryDb
         protected virtual void OnNewValue(IComparable rowKey, TValue value)
         {
             NewValue?.Invoke(rowKey, value);
+        }
+
+        /// <summary>
+        /// Rises <see cref="DeletedValue"/> event.
+        /// </summary>
+        /// <param name="rowKey">This value's row key.</param>
+        /// <param name="value">Deleted value.</param>
+        protected virtual void OnDeletedValue(IComparable rowKey, TValue value)
+        {
+            DeletedValue?.Invoke(rowKey, value);
         }
 
         /// <summary>

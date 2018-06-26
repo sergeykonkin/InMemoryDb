@@ -39,7 +39,8 @@ CREATE TABLE [User] (
     LastName nvarchar(250),
     Age int,
     Gender bit,
-    [Timestamp] rowversion
+    [Timestamp] rowversion,
+    Deleted bit not null default(0)
 )");
             }
         }
