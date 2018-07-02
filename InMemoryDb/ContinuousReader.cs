@@ -16,6 +16,8 @@ namespace InMemoryDb
     /// <typeparam name="TValue">Type of value data should be mapped to.</typeparam>
     internal sealed class ContinuousReader<TValue>
     {
+        private static IDictionary<Type, List<string>> _columnNamesCache = new ConcurrentDictionary<Type, List<string>>();
+
         private readonly Type _type;
 
         private readonly string _connectionString;
@@ -134,7 +136,7 @@ namespace InMemoryDb
             var isDeletedColumn = EncodeSqlObjectName(_deletedColumnName);
             var rowVersionColumn = EncodeSqlObjectName(_rowVersionColumnName);
 
-            var columns = GetPropNamesCached();
+            var columns = GetColumnNamesFromTypeCached();
 
             var commandText =
                 $@"
@@ -166,19 +168,18 @@ ORDER BY {rowVersionColumn} ASC";
             }
         }
 
-        private static IDictionary<Type, List<string>> _propNamesCache = new ConcurrentDictionary<Type, List<string>>();
-
-        private IEnumerable<string> GetPropNamesCached()
+        private IEnumerable<string> GetColumnNamesFromTypeCached()
         {
-            if (_propNamesCache.ContainsKey(_type))
-                return _propNamesCache[_type];
+            if (_columnNamesCache.ContainsKey(_type))
+                return _columnNamesCache[_type];
 
             var propNames = _type
                 .GetProperties(BindingFlags.Public | BindingFlags.Instance)
-                .Select(prop => prop.Name)
+                .Where(prop => prop.GetCustomAttribute<NotMappedAttribute>() == null)
+                .Select(prop => prop.GetCustomAttribute<ColumnAttribute>()?.Name ?? prop.Name)
                 .ToList();
 
-            _propNamesCache.Add(_type, propNames);
+            _columnNamesCache.Add(_type, propNames);
             return propNames;
         }
 
