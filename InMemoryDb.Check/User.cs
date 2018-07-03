@@ -1,11 +1,15 @@
-﻿namespace InMemoryDb.Check
+﻿using System.ComponentModel.DataAnnotations.Schema;
+
+namespace InMemoryDb.Check
 {
     public class User
     {
-        public int Id { get; set; }
-        public string FirstName { get; set; }
-        public string LastName { get; set; }
-        public int Age { get; set; }
-        public bool Gender { get; set; }
+        [Column("Id")] public int UserId;
+        public string FirstName;
+        public string LastName;
+        public int Age;
+        public bool Gender;
+
+        public string FullName => $"{FirstName} {LastName}";
     }
 }

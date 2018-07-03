@@ -47,10 +47,11 @@ CREATE TABLE [User] (
             {
                 using (var conn = new SqlConnection(LocalDb.ConnectionString))
                 {
+                    var user = userFaker.Generate();
                     conn.Execute(
                         @"INSERT INTO [User] (FirstName, LastName, Age, Gender)
                           VALUES (@firstName, @lastName, @age, @gender);",
-                        userFaker.Generate());
+                        new {user.FirstName, user.LastName, user.Age, user.Gender});
                 }
             }
         }

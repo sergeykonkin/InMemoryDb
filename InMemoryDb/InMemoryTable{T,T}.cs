@@ -13,6 +13,7 @@ namespace InMemoryDb
     /// <typeparam name="TKey">Type of the data key.</typeparam>
     /// <typeparam name="TValue">Type of the data value.</typeparam>
     public class InMemoryTable<TKey, TValue> : IReadOnlyDictionary<TKey, TValue>
+        where TValue : new()
     {
         private readonly IDictionary<TKey, TValue> _store;
         private readonly ContinuousReader<TValue> _reader;

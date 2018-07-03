@@ -2,21 +2,22 @@
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Data;
 using System.Data.SqlClient;
 using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
-using Dapper;
 
 namespace InMemoryDb
 {
     /// <summary>
-    /// Provides functionality to continuously and incrementally read data from origin data source and map records to <typeparamref name="TValue" /> <see cref="Type"/>.
+    /// Provides functionality to continuously and incrementally read data from SQL server table and map records to <typeparamref name="TValue" /> <see cref="Type"/>.
     /// </summary>
     /// <typeparam name="TValue">Type of value data should be mapped to.</typeparam>
     internal sealed class ContinuousReader<TValue>
+        where TValue : new()
     {
-        private static IDictionary<Type, List<string>> _columnNamesCache = new ConcurrentDictionary<Type, List<string>>();
+        private static IDictionary<Type, List<Tuple<MemberInfo, string>>> _typeMapCache;
 
         private readonly Type _type;
 
@@ -64,6 +65,11 @@ namespace InMemoryDb
             if (delay <= 0) throw new ArgumentOutOfRangeException(nameof(delay));
             _delay = delay;
             _initialReadFinishedSource = new TaskCompletionSource<bool>();
+        }
+
+        static ContinuousReader()
+        {
+            _typeMapCache = new ConcurrentDictionary<Type, List<Tuple<MemberInfo, string>>>();
         }
 
         /// <summary>
@@ -132,33 +138,28 @@ namespace InMemoryDb
 
         private List<Tuple<TValue, bool, ulong>> ReadNextBatch(ulong since)
         {
-            var table = EncodeSqlObjectName(_tableName);
-            var isDeletedColumn = EncodeSqlObjectName(_deletedColumnName);
-            var rowVersionColumn = EncodeSqlObjectName(_rowVersionColumnName);
-
-            var columns = GetColumnNamesFromTypeCached();
-
-            var commandText =
-                $@"
-SELECT TOP (@batchSize)
-    {string.Join(",",columns)},
-    {isDeletedColumn},
-    {rowVersionColumn}
-FROM {table}
-WHERE {rowVersionColumn} > @rowVersion
-ORDER BY {rowVersionColumn} ASC";
-
-            using (var conn = new SqlConnection(_connectionString))
+            using (var connection = new SqlConnection(_connectionString))
+            using (var command = CreateCommand(connection, since))
             {
                 try
                 {
-                    return conn.Query<TValue, bool, byte[], Tuple<TValue, bool, ulong>>(
-                            commandText,
-                            (value, isDel, rowVersionBytes) => new Tuple<TValue, bool, ulong>(value, isDel, ConvertToUInt64(rowVersionBytes)),
-                            new {batchSize = _batchSize, rowVersion = ConvertToBytes(since)},
-                            commandTimeout: _commandTimeout,
-                            splitOn: $"{_deletedColumnName},{_rowVersionColumnName}")
-                        .ToList();
+                    connection.Open();
+
+                    using (var reader = command.ExecuteReader())
+                    {
+                        var result = new List<Tuple<TValue, bool, ulong>>();
+                        while (reader.Read())
+                        {
+                            var value = ParseValue(reader);
+
+                            var isDeleted = (bool)reader[_deletedColumnName];
+                            var rowVersion = ConvertToUInt64((byte[])reader[_rowVersionColumnName]);
+
+                            result.Add(new Tuple<TValue, bool, ulong>(value, isDeleted, rowVersion));
+                        }
+
+                        return result;
+                    }
                 }
                 catch (Exception e)
                 {
@@ -168,19 +169,67 @@ ORDER BY {rowVersionColumn} ASC";
             }
         }
 
-        private IEnumerable<string> GetColumnNamesFromTypeCached()
+        private SqlCommand CreateCommand(SqlConnection connection, ulong since)
         {
-            if (_columnNamesCache.ContainsKey(_type))
-                return _columnNamesCache[_type];
+            var table = EncodeSqlObjectName(_tableName);
+            var isDeletedColumn = EncodeSqlObjectName(_deletedColumnName);
+            var rowVersionColumn = EncodeSqlObjectName(_rowVersionColumnName);
 
-            var propNames = _type
-                .GetProperties(BindingFlags.Public | BindingFlags.Instance)
-                .Where(prop => prop.GetCustomAttribute<NotMappedAttribute>() == null)
-                .Select(prop => prop.GetCustomAttribute<ColumnAttribute>()?.Name ?? prop.Name)
+            var typeMap = GetTypeMapCached(_type);
+            var columns = typeMap.Select(t => t.Item2).Select(EncodeSqlObjectName);
+
+            var commandText =
+                $@"SELECT TOP (@batchSize)
+                       {string.Join(",", columns)},
+                       {isDeletedColumn},
+                       {rowVersionColumn}
+                   FROM {table}
+                   WHERE {rowVersionColumn} > @rowVersion
+                   ORDER BY {rowVersionColumn} ASC";
+
+            var command = connection.CreateCommand();
+            command.CommandText = commandText;
+            command.CommandTimeout = _commandTimeout;
+            command.Parameters.AddWithValue("batchSize", _batchSize);
+            command.Parameters.AddWithValue("rowVersion", ConvertToBytes(since));
+
+            return command;
+        }
+
+        private TValue ParseValue(IDataRecord row)
+        {
+            var value = new TValue();
+            foreach (var map in GetTypeMapCached(_type))
+            {
+                var member = map.Item1;
+                var columnName = map.Item2;
+                member.SetValue(value, row[columnName]);
+            }
+
+            return value;
+        }
+
+        private static List<Tuple<MemberInfo, string>> GetTypeMapCached(Type type)
+        {
+            if (_typeMapCache.ContainsKey(type))
+                return _typeMapCache[type];
+
+            MemberInfo[] members = type
+                    .GetProperties(BindingFlags.Public | BindingFlags.Instance)
+                    .Where(prop => prop.CanWrite)
+                    .Cast<MemberInfo>()
+                    .Union(type.GetFields(BindingFlags.Public | BindingFlags.Instance))
+                    .ToArray();
+
+            var typeMap = members
+                .Where(member => member.GetCustomAttribute<NotMappedAttribute>() == null)
+                .Select(member => new Tuple<MemberInfo, string>(
+                    member,
+                    member.GetCustomAttribute<ColumnAttribute>()?.Name ?? member.Name))
                 .ToList();
 
-            _columnNamesCache.Add(_type, propNames);
-            return propNames;
+            _typeMapCache.Add(type, typeMap);
+            return typeMap;
         }
 
         private static string EncodeSqlObjectName(string name)

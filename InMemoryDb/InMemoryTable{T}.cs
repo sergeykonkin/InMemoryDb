@@ -4,6 +4,7 @@ namespace InMemoryDb
 {
     /// <inheritdoc />
     public class InMemoryTable<TValue> : InMemoryTable<object, TValue>
+        where TValue : new()
     {
         /// <inheritdoc />
         /// <summary>

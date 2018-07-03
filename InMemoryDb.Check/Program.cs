@@ -6,7 +6,7 @@
         {
             Setup.Init();
 
-            var table = new InMemoryTable<int, User>(Setup.LocalDb.ConnectionString, user => user.Id);
+            var table = new InMemoryTable<int, User>(Setup.LocalDb.ConnectionString, user => user.UserId);
             table.Start();
             table.WhenInitialReadFinished().Wait();
 
