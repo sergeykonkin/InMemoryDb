@@ -39,7 +39,7 @@ namespace InMemoryDb
         /// <param name="connectionString">SQL Server connection string.</param>
         /// <param name="tableName">The name of the table to read data from.</param>
         /// <param name="rowVersionColumnName">The name of RowVersion (Timestamp) column.</param>
-        /// <param name="deletedColumnName">The name of column that identifies deleted value. Can be null if deletion handling is not required.</param>
+        /// <param name="deletedColumnName">The name of column that identifies deleted value.</param>
         /// <param name="commandTimeout">SQL Command timeout in secconds.</param>
         /// <param name="batchSize">Batch size of single read operation.</param>
         /// <param name="delay">Delay (in milliseconds) between two requests when reader continuously polling origin data source.</param>
@@ -114,6 +114,7 @@ namespace InMemoryDb
                             }
 
                             await Task.Delay(_delay, cancellationToken);
+                            continue;
                         }
 
                         foreach (var tuple in batch)
@@ -136,7 +137,11 @@ namespace InMemoryDb
                 }
                 catch (Exception ex)
                 {
-                    _initialReadFinishedSource.SetException(ex);
+                    if (!_isInitialReadFinished)
+                    {
+                        _initialReadFinishedSource.SetException(ex);
+                    }
+
                     handleException?.Invoke(ex);
                 }
             }, cancellationToken);

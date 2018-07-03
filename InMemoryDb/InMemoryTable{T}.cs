@@ -1,14 +1,16 @@
 ﻿using System;
+using System.Collections;
+using System.Collections.Generic;
 
 namespace InMemoryDb
 {
-    /// <inheritdoc />
-    public class InMemoryTable<TValue> : InMemoryTable<object, TValue>
+    /// <inheritdoc cref="IInMemoryTable" />
+    public class InMemoryTable<TValue> : InMemoryTableBase<object, TValue>, IReadOnlyCollection<TValue>
         where TValue : new()
     {
         /// <inheritdoc />
         /// <summary>
-        /// Initializes new instance of <see cref="InMemoryTable{T}" />
+        /// Initializes new instance of <see cref="InMemoryTable{TValue}" />
         /// </summary>
         public InMemoryTable(
             string connectionString,
@@ -30,5 +32,22 @@ namespace InMemoryDb
                 delay)
         {
         }
+
+        public TValue this[object index] => _store[index];
+
+        /// <inheritdoc />
+        public IEnumerator<TValue> GetEnumerator()
+        {
+            return _store.Values.GetEnumerator();
+        }
+
+        /// <inheritdoc />
+        IEnumerator IEnumerable.GetEnumerator()
+        {
+            return ((IEnumerable) _store).GetEnumerator();
+        }
+
+        /// <inheritdoc />
+        public int Count => _store.Count;
     }
 }

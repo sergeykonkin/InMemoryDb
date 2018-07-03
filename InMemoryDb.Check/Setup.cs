@@ -31,6 +31,20 @@ CREATE TABLE [User] (
     Gender bit,
     RowVersion rowversion,
     IsDeleted bit not null default(0)
+)
+
+CREATE TABLE [Group] (
+    Id int PRIMARY KEY IDENTITY(1, 1),
+    Name nvarchar(250),
+    RowVersion rowversion,
+    IsDeleted bit not null default(0)
+)
+
+CREATE TABLE [UserGroup] (
+    UserId int,
+    GroupId int,
+    RowVersion rowversion,
+    IsDeleted bit not null default(0)
 )");
             }
         }
@@ -43,16 +57,20 @@ CREATE TABLE [User] (
                 .RuleFor(u => u.Age, f => f.Person.Random.Number(18, 60))
                 .RuleFor(u => u.Gender, f => f.Person.Gender == Name.Gender.Male);
 
-            for (int i = 0; i < 1234; i++)
+            using (var conn = new SqlConnection(LocalDb.ConnectionString))
             {
-                using (var conn = new SqlConnection(LocalDb.ConnectionString))
+                for (int i = 0; i < 1234; i++)
                 {
                     var user = userFaker.Generate();
                     conn.Execute(
                         @"INSERT INTO [User] (FirstName, LastName, Age, Gender)
                           VALUES (@firstName, @lastName, @age, @gender);",
                         new {user.FirstName, user.LastName, user.Age, user.Gender});
+
                 }
+
+                conn.Execute("INSERT INTO [Group] (Name) VALUES ('Admin')");
+                conn.Execute("INSERT INTO [UserGroup] (UserId, GroupId) VALUES (777, 1)");
             }
         }
     }
