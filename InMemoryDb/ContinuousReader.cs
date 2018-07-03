@@ -91,45 +91,53 @@ namespace InMemoryDb
         /// <summary>
         /// Starts continuous data reading routine.
         /// </summary>
-        public void Start(Action<TValue> onNewValue, Action<TValue> onDeletedValue, CancellationToken cancellationToken)
+        public void Start(Action<TValue> onNewValue, Action<TValue> onDeletedValue, CancellationToken cancellationToken, Action<Exception> handleException)
         {
             _initialReadFinishedSource = new TaskCompletionSource<bool>();
 
             Task.Run(async () =>
             {
-                ulong since = 0;
-                while (true)
+                try
                 {
-                    cancellationToken.ThrowIfCancellationRequested();
-
-                    var batch = await ReadNextBatchAsync(since, cancellationToken);
-                    if (batch.Count == 0)
+                    ulong since = 0;
+                    while (true)
                     {
-                        if (!_isInitialReadFinished)
+                        cancellationToken.ThrowIfCancellationRequested();
+
+                        var batch = await ReadNextBatchAsync(since, cancellationToken);
+                        if (batch.Count == 0)
                         {
-                            _isInitialReadFinished = true;
-                            _initialReadFinishedSource.SetResult(true);
+                            if (!_isInitialReadFinished)
+                            {
+                                _isInitialReadFinished = true;
+                                _initialReadFinishedSource.SetResult(true);
+                            }
+
+                            await Task.Delay(_delay, cancellationToken);
                         }
 
-                        await Task.Delay(_delay, cancellationToken);
+                        foreach (var tuple in batch)
+                        {
+                            var value = tuple.Item1;
+                            var isDeleted = tuple.Item2;
+
+                            if (isDeleted)
+                            {
+                                onDeletedValue.Invoke(value);
+                            }
+                            else
+                            {
+                                onNewValue.Invoke(value);
+                            }
+                        }
+
+                        since = batch.Max(t => t.Item3);
                     }
-
-                    foreach (var tuple in batch)
-                    {
-                        var value = tuple.Item1;
-                        var isDeleted = tuple.Item2;
-
-                        if (isDeleted)
-                        {
-                            onDeletedValue.Invoke(value);
-                        }
-                        else
-                        {
-                            onNewValue.Invoke(value);
-                        }
-                    }
-
-                    since = batch.Max(t => t.Item3);
+                }
+                catch (Exception ex)
+                {
+                    _initialReadFinishedSource.SetException(ex);
+                    handleException?.Invoke(ex);
                 }
             }, cancellationToken);
         }
@@ -139,30 +147,22 @@ namespace InMemoryDb
             using (var connection = new SqlConnection(_connectionString))
             using (var command = CreateCommand(connection, since))
             {
-                try
-                {
-                    await connection.OpenAsync(cancellationToken);
+                await connection.OpenAsync(cancellationToken);
 
-                    using (var reader = await command.ExecuteReaderAsync(cancellationToken))
+                using (var reader = await command.ExecuteReaderAsync(cancellationToken))
+                {
+                    var result = new List<Tuple<TValue, bool, ulong>>();
+                    while (await reader.ReadAsync(cancellationToken))
                     {
-                        var result = new List<Tuple<TValue, bool, ulong>>();
-                        while (await reader.ReadAsync(cancellationToken))
-                        {
-                            var value = ParseValue(reader);
+                        var value = ParseValue(reader);
 
-                            var isDeleted = (bool)reader[_deletedColumnName];
-                            var rowVersion = ConvertToUInt64((byte[])reader[_rowVersionColumnName]);
+                        var isDeleted = (bool)reader[_deletedColumnName];
+                        var rowVersion = ConvertToUInt64((byte[])reader[_rowVersionColumnName]);
 
-                            result.Add(new Tuple<TValue, bool, ulong>(value, isDeleted, rowVersion));
-                        }
-
-                        return result;
+                        result.Add(new Tuple<TValue, bool, ulong>(value, isDeleted, rowVersion));
                     }
-                }
-                catch (Exception e)
-                {
-                    Console.WriteLine(e);
-                    throw;
+
+                    return result;
                 }
             }
         }

@@ -1,4 +1,6 @@
-﻿namespace InMemoryDb.Check
+﻿using System;
+
+namespace InMemoryDb.Check
 {
     public class Program
     {
@@ -7,8 +9,8 @@
             Setup.Init();
 
             var table = new InMemoryTable<int, User>(Setup.LocalDb.ConnectionString, user => user.UserId);
-            table.Start();
-            table.WhenInitialReadFinished().Wait();
+            table.Start(handleException: Console.WriteLine);
+            Console.ReadLine();
 
             Setup.LocalDb.Dispose();
         }

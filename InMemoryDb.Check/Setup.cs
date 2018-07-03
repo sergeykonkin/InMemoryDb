@@ -43,7 +43,7 @@ CREATE TABLE [User] (
                 .RuleFor(u => u.Age, f => f.Person.Random.Number(18, 60))
                 .RuleFor(u => u.Gender, f => f.Person.Gender == Name.Gender.Male);
 
-            for (int i = 0; i < 12345; i++)
+            for (int i = 0; i < 1234; i++)
             {
                 using (var conn = new SqlConnection(LocalDb.ConnectionString))
                 {

@@ -57,12 +57,13 @@ namespace InMemoryDb
         /// <summary>
         /// Starts continuous data reading routine.
         /// </summary>
-        public void Start(CancellationToken cancellationToken = default(CancellationToken))
+        public void Start(CancellationToken cancellationToken = default(CancellationToken), Action<Exception> handleException = null)
         {
             _reader.Start(
                 newValue => _store[_keyFactory(newValue)] = newValue,
                 deletedValue => _store.Remove(_keyFactory(deletedValue)),
-                cancellationToken);
+                cancellationToken,
+                handleException);
         }
 
         /// <summary>
