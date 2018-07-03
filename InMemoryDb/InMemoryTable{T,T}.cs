@@ -2,6 +2,7 @@
 using System.Collections;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace InMemoryDb
@@ -58,9 +59,18 @@ namespace InMemoryDb
         /// </summary>
         public void Start()
         {
+            Start(new CancellationTokenSource().Token);
+        }
+
+        /// <summary>
+        /// Starts continuous data reading routine.
+        /// </summary>
+        public void Start(CancellationToken cancellationToken)
+        {
             _reader.Start(
                 newValue => _store[_keyFactory(newValue)] = newValue,
-                deletedValue => _store.Remove(_keyFactory(deletedValue)));
+                deletedValue => _store.Remove(_keyFactory(deletedValue)),
+                cancellationToken);
         }
 
         /// <summary>

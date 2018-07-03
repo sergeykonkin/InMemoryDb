@@ -6,6 +6,7 @@ using System.Data;
 using System.Data.SqlClient;
 using System.Linq;
 using System.Reflection;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace InMemoryDb
@@ -28,9 +29,9 @@ namespace InMemoryDb
         private readonly int _batchSize;
         private readonly string _tableName;
         private readonly int _delay;
-        private readonly TaskCompletionSource<bool> _initialReadFinishedSource;
 
         private bool _isInitialReadFinished;
+        private TaskCompletionSource<bool> _initialReadFinishedSource;
 
         /// <summary>
         /// Initializes new instance of <see cref="ContinuousReader{TValue}"/>
@@ -64,7 +65,6 @@ namespace InMemoryDb
 
             if (delay <= 0) throw new ArgumentOutOfRangeException(nameof(delay));
             _delay = delay;
-            _initialReadFinishedSource = new TaskCompletionSource<bool>();
         }
 
         static ContinuousReader()
@@ -77,20 +77,29 @@ namespace InMemoryDb
         /// </summary>
         public Task WhenInitialReadFinished()
         {
+            if (_initialReadFinishedSource == null)
+            {
+                throw new InvalidOperationException("Reading was not started.");
+            }
+
             return _initialReadFinishedSource.Task;
         }
 
         /// <summary>
         /// Starts continuous data reading routine.
         /// </summary>
-        public void Start(Action<TValue> onNewValue, Action<TValue> onDeletedValue)
+        public void Start(Action<TValue> onNewValue, Action<TValue> onDeletedValue, CancellationToken cancellationToken)
         {
+            _initialReadFinishedSource = new TaskCompletionSource<bool>();
+
             Task.Run(async () =>
             {
                 var since = 0ul;
                 while (true)
                 {
-                    var batch = await ReadNextBatchAsync(since);
+                    cancellationToken.ThrowIfCancellationRequested();
+
+                    var batch = await ReadNextBatchAsync(since, cancellationToken);
                     if (batch.Count == 0)
                     {
                         if (!_isInitialReadFinished)
@@ -99,7 +108,7 @@ namespace InMemoryDb
                             _initialReadFinishedSource.SetResult(true);
                         }
 
-                        await Task.Delay(_delay);
+                        await Task.Delay(_delay, cancellationToken);
                     }
 
                     foreach (var tuple in batch)
@@ -119,22 +128,22 @@ namespace InMemoryDb
 
                     since = batch.Max(t => t.Item3);
                 }
-            });
+            }, cancellationToken);
         }
 
-        private async Task<List<Tuple<TValue, bool, ulong>>> ReadNextBatchAsync(ulong since)
+        private async Task<List<Tuple<TValue, bool, ulong>>> ReadNextBatchAsync(ulong since, CancellationToken cancellationToken)
         {
             using (var connection = new SqlConnection(_connectionString))
             using (var command = CreateCommand(connection, since))
             {
                 try
                 {
-                    await connection.OpenAsync();
+                    await connection.OpenAsync(cancellationToken);
 
-                    using (var reader = await command.ExecuteReaderAsync())
+                    using (var reader = await command.ExecuteReaderAsync(cancellationToken))
                     {
                         var result = new List<Tuple<TValue, bool, ulong>>();
-                        while (await reader.ReadAsync())
+                        while (await reader.ReadAsync(cancellationToken))
                         {
                             var value = ParseValue(reader);
 
