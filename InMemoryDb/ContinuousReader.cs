@@ -97,7 +97,7 @@ namespace InMemoryDb
 
             Task.Run(async () =>
             {
-                var since = 0ul;
+                ulong since = 0;
                 while (true)
                 {
                     cancellationToken.ThrowIfCancellationRequested();
