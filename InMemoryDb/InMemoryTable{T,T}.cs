@@ -57,15 +57,7 @@ namespace InMemoryDb
         /// <summary>
         /// Starts continuous data reading routine.
         /// </summary>
-        public void Start()
-        {
-            Start(new CancellationTokenSource().Token);
-        }
-
-        /// <summary>
-        /// Starts continuous data reading routine.
-        /// </summary>
-        public void Start(CancellationToken cancellationToken)
+        public void Start(CancellationToken cancellationToken = default(CancellationToken))
         {
             _reader.Start(
                 newValue => _store[_keyFactory(newValue)] = newValue,
@@ -76,15 +68,7 @@ namespace InMemoryDb
         /// <summary>
         /// Returns the task that will be completed when initial data read is finished.
         /// </summary>
-        public Task WhenInitialReadFinished()
-        {
-            return _reader.WhenInitialReadFinished(new CancellationTokenSource().Token);
-        }
-
-        /// <summary>
-        /// Returns the task that will be completed when initial data read is finished.
-        /// </summary>
-        public Task WhenInitialReadFinished(CancellationToken cancellationToken)
+        public Task WhenInitialReadFinished(CancellationToken cancellationToken = default(CancellationToken))
         {
             return _reader.WhenInitialReadFinished(cancellationToken);
         }
