@@ -8,12 +8,11 @@ namespace InMemoryDb
 {
     /// <inheritdoc />
     /// <summary>
-    /// In-memory replica of origin data source.
+    /// In-memory replica of database table.
     /// </summary>
     /// <typeparam name="TKey">Type of the data key.</typeparam>
     /// <typeparam name="TValue">Type of the data value.</typeparam>
     public class InMemoryTable<TKey, TValue> : IReadOnlyDictionary<TKey, TValue>
-        where TValue : new()
     {
         private readonly IDictionary<TKey, TValue> _store;
         private readonly ContinuousReader<TValue> _reader;
@@ -21,9 +20,9 @@ namespace InMemoryDb
         /// <summary>
         /// Initializes new instance of <see cref="InMemoryTable{TKey,TValue}"/>
         /// </summary>
-        /// <param name="keyFactory">In-memory dictionary's key factory.</param>
         /// <param name="connectionString">SQL Server connection string.</param>
-        /// <param name="tableName">The name of the table to read data from.</param>
+        /// <param name="keyFactory">In-memory dictionary's key factory.</param>
+        /// <param name="tableName">The name of the table to read data from. If null - will be inferred from <typeparamref name="TValue"/> type.</param>
         /// <param name="rowVersionColumnName">The name of RowVersion (Timestamp) column.</param>
         /// <param name="deletedColumnName">The name of column that identifies deleted value. Can be null if deletion handling is not required.</param>
         /// <param name="commandTimeout">SQL Command timeout in secconds.</param>
