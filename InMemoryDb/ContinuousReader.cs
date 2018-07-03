@@ -75,14 +75,17 @@ namespace InMemoryDb
         /// <summary>
         /// Returns the task that will be completed when initial data read is finished.
         /// </summary>
-        public Task WhenInitialReadFinished()
+        public Task WhenInitialReadFinished(CancellationToken cancellationToken)
         {
             if (_initialReadFinishedSource == null)
             {
                 throw new InvalidOperationException("Reading was not started.");
             }
 
-            return _initialReadFinishedSource.Task;
+            using (cancellationToken.Register(() => _initialReadFinishedSource.TrySetCanceled()))
+            {
+                return _initialReadFinishedSource.Task;
+            }
         }
 
         /// <summary>
