@@ -90,7 +90,7 @@ namespace InMemoryDb
                 var since = 0ul;
                 while (true)
                 {
-                    var batch = ReadNextBatch(since);
+                    var batch = await ReadNextBatchAsync(since);
                     if (batch.Count == 0)
                     {
                         if (!_isInitialReadFinished)
@@ -106,7 +106,6 @@ namespace InMemoryDb
                     {
                         var value = tuple.Item1;
                         var isDeleted = tuple.Item2;
-                        var rowVersion = tuple.Item3;
 
                         if (isDeleted)
                         {
@@ -116,29 +115,26 @@ namespace InMemoryDb
                         {
                             onNewValue.Invoke(value);
                         }
-
-                        if (rowVersion.CompareTo(since) > 0)
-                        {
-                            since = rowVersion;
-                        }
                     }
+
+                    since = batch.Max(t => t.Item3);
                 }
             });
         }
 
-        private List<Tuple<TValue, bool, ulong>> ReadNextBatch(ulong since)
+        private async Task<List<Tuple<TValue, bool, ulong>>> ReadNextBatchAsync(ulong since)
         {
             using (var connection = new SqlConnection(_connectionString))
             using (var command = CreateCommand(connection, since))
             {
                 try
                 {
-                    connection.Open();
+                    await connection.OpenAsync();
 
-                    using (var reader = command.ExecuteReader())
+                    using (var reader = await command.ExecuteReaderAsync())
                     {
                         var result = new List<Tuple<TValue, bool, ulong>>();
-                        while (reader.Read())
+                        while (await reader.ReadAsync())
                         {
                             var value = ParseValue(reader);
 
