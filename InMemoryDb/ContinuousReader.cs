@@ -81,19 +81,9 @@ namespace InMemoryDb
         }
 
         /// <summary>
-        /// Occurs when new value was read from origin data source.
+        /// Starts continuous data reading routine.
         /// </summary>
-        public event Action<TValue> NewValue;
-
-        /// <summary>
-        /// Occurs when value has been deleted from origin data source.
-        /// </summary>
-        public event Action<TValue> DeletedValue;
-
-        /// <summary>
-        /// Starts data reading process.
-        /// </summary>
-        public void Start()
+        public void Start(Action<TValue> onNewValue, Action<TValue> onDeletedValue)
         {
             Task.Run(async () =>
             {
@@ -120,11 +110,11 @@ namespace InMemoryDb
 
                         if (isDeleted)
                         {
-                            DeletedValue?.Invoke(value);
+                            onDeletedValue.Invoke(value);
                         }
                         else
                         {
-                            NewValue?.Invoke(value);
+                            onNewValue.Invoke(value);
                         }
 
                         if (rowVersion.CompareTo(since) > 0)

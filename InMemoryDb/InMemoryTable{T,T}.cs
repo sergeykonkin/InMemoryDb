@@ -15,6 +15,7 @@ namespace InMemoryDb
     public class InMemoryTable<TKey, TValue> : IReadOnlyDictionary<TKey, TValue>
         where TValue : new()
     {
+        private readonly Func<TValue, TKey> _keyFactory;
         private readonly IDictionary<TKey, TValue> _store;
         private readonly ContinuousReader<TValue> _reader;
 
@@ -39,7 +40,7 @@ namespace InMemoryDb
             int batchSize = 1000,
             int delay = 200)
         {
-            if (keyFactory == null) throw new ArgumentNullException(nameof(keyFactory));
+            _keyFactory = keyFactory ?? throw new ArgumentNullException(nameof(keyFactory));
 
             _store = new ConcurrentDictionary<TKey, TValue>();
             _reader = new ContinuousReader<TValue>(
@@ -50,9 +51,6 @@ namespace InMemoryDb
                 commandTimeout,
                 batchSize,
                 delay);
-
-            _reader.NewValue += value => _store[keyFactory(value)] = value;
-            _reader.DeletedValue += value => _store.Remove(keyFactory(value));
         }
 
         /// <summary>
@@ -60,7 +58,9 @@ namespace InMemoryDb
         /// </summary>
         public void Start()
         {
-            _reader.Start();
+            _reader.Start(
+                newValue => _store[_keyFactory(newValue)] = newValue,
+                deletedValue => _store.Remove(_keyFactory(deletedValue)));
         }
 
         /// <summary>
