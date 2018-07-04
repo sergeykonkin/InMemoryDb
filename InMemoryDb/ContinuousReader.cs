@@ -1,11 +1,8 @@
 ﻿using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations.Schema;
 using System.Data;
 using System.Data.SqlClient;
 using System.Linq;
-using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -18,17 +15,15 @@ namespace InMemoryDb
     internal sealed class ContinuousReader<TValue>
         where TValue : new()
     {
-        private static IDictionary<Type, List<Tuple<MemberInfo, string>>> _typeMapCache;
-
-        private readonly Type _type;
-
         private readonly string _connectionString;
         private readonly string _rowVersionColumnName;
         private readonly string _deletedColumnName;
         private readonly int _commandTimeout;
         private readonly int _batchSize;
-        private readonly string _tableName;
         private readonly int _delay;
+
+        private readonly Type _type;
+        private readonly string _tableName;
 
         private bool _isInitialReadFinished;
         private TaskCompletionSource<bool> _initialReadFinishedSource;
@@ -61,15 +56,10 @@ namespace InMemoryDb
             _batchSize = batchSize;
 
             _type = typeof(TValue);
-            _tableName = tableName ?? GetTableNameFromAttribute(_type) ?? _type.Name;
+            _tableName = tableName ?? ReflectionHelper.GetTableName(_type);
 
             if (delay <= 0) throw new ArgumentOutOfRangeException(nameof(delay));
             _delay = delay;
-        }
-
-        static ContinuousReader()
-        {
-            _typeMapCache = new ConcurrentDictionary<Type, List<Tuple<MemberInfo, string>>>();
         }
 
         /// <summary>
@@ -178,7 +168,7 @@ namespace InMemoryDb
             var isDeletedColumn = EncodeSqlObjectName(_deletedColumnName);
             var rowVersionColumn = EncodeSqlObjectName(_rowVersionColumnName);
 
-            var typeMap = GetTypeMapCached(_type);
+            var typeMap = ReflectionHelper.GetColumnMap(_type);
             var columns = typeMap.Select(t => t.Item2).Select(EncodeSqlObjectName);
 
             var commandText =
@@ -202,7 +192,7 @@ namespace InMemoryDb
         private TValue ParseValue(IDataRecord row)
         {
             var value = new TValue();
-            foreach (var map in GetTypeMapCached(_type))
+            foreach (var map in ReflectionHelper.GetColumnMap(_type))
             {
                 var member = map.Item1;
                 var columnName = map.Item2;
@@ -212,44 +202,11 @@ namespace InMemoryDb
             return value;
         }
 
-        private static List<Tuple<MemberInfo, string>> GetTypeMapCached(Type type)
-        {
-            if (_typeMapCache.ContainsKey(type))
-                return _typeMapCache[type];
-
-            MemberInfo[] members = type
-                    .GetProperties(BindingFlags.Public | BindingFlags.Instance)
-                    .Where(prop => prop.CanWrite)
-                    .Cast<MemberInfo>()
-                    .Union(type.GetFields(BindingFlags.Public | BindingFlags.Instance))
-                    .ToArray();
-
-            var typeMap = members
-                .Where(member => member.GetCustomAttribute<NotMappedAttribute>() == null)
-                .Select(member => new Tuple<MemberInfo, string>(
-                    member,
-                    member.GetCustomAttribute<ColumnAttribute>()?.Name ?? member.Name))
-                .ToList();
-
-            _typeMapCache.Add(type, typeMap);
-            return typeMap;
-        }
-
         private static string EncodeSqlObjectName(string name)
         {
             var split = name.Split('.');
             var endoded = split.Select(p => p.Trim('[', ']', ' ')).Select(x => $"[{x}]");
             return string.Join(".", endoded);
-        }
-
-        private string GetTableNameFromAttribute(Type type)
-        {
-            var tableAttr = type.GetCustomAttribute<TableAttribute>();
-            if (tableAttr == null)
-                return null;
-
-            return (tableAttr.Schema == null ? "" : tableAttr.Schema + ".")
-                   + tableAttr.Name;
         }
 
         private static ulong ConvertToUInt64(byte[] bytes)
