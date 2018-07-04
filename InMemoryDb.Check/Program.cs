@@ -20,7 +20,7 @@ namespace InMemoryDb.Check
                 where g.Name == "Admin"
                 select u).ToList();
 
-            Console.ReadLine();
+            var ok = admins.Single() == db.Users[777];
         }
     }
 
@@ -32,8 +32,8 @@ namespace InMemoryDb.Check
 
         public MyDatabase() : base(Check.Setup.LocalDb.ConnectionString)
         {
-            Users = Table<User>(user => user.Id);
-            Groups = Table<Group>(group => group.Id);
+            Users = Table<User>();
+            Groups = Table<Group>();
             UserGroups = Table<UserGroup>();
         }
     }

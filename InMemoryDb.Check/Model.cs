@@ -1,9 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
-
-namespace InMemoryDb.Check
+﻿namespace InMemoryDb.Check
 {
-    [Table("User", Schema = "dbo")]
     public class User
     {
         public int Id;
