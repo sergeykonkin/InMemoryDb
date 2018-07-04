@@ -205,8 +205,8 @@ namespace InMemoryDb
         private static string EncodeSqlObjectName(string name)
         {
             var split = name.Split('.');
-            var endoded = split.Select(p => p.Trim('[', ']', ' ')).Select(x => $"[{x}]");
-            return string.Join(".", endoded);
+            var enсoded = split.Select(p => p.Trim('[', ']', ' ')).Select(x => $"[{x}]");
+            return string.Join(".", enсoded);
         }
 
         private static ulong ConvertToUInt64(byte[] bytes)
