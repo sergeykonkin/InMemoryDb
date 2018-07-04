@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace InMemoryDb
 {
@@ -23,7 +24,7 @@ namespace InMemoryDb
             int delay = 200)
             : base(
                 connectionString,
-                keyFactory ?? (x => x.GetHashCode()),
+                keyFactory ?? GetKey,
                 tableName,
                 rowVersionColumnName,
                 deletedColumnName,
@@ -49,5 +50,20 @@ namespace InMemoryDb
 
         /// <inheritdoc />
         public int Count => _store.Count;
+
+        private static object GetKey(TValue value)
+        {
+            var type = value.GetType();
+            var keyMembers = ReflectionHelper.GetKeyMembers(type, "Id");
+            if (keyMembers.Length == 0)
+            {
+                throw new InvalidOperationException("Cannot infer key of type " + type);
+            }
+
+            return keyMembers
+                .Select(key => key.GetValue(value))
+                .Select(val => val.GetHashCode())
+                .Aggregate((acc, cur) => unchecked ((acc * 397) ^ cur ));
+        }
     }
 }
