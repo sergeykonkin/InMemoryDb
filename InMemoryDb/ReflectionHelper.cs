@@ -112,12 +112,7 @@ namespace InMemoryDb
                     .Where(prop => prop.Name.EndsWith(suffix, StringComparison.InvariantCultureIgnoreCase))
                     .ToArray();
 
-                if (bySuffix.Length == 1) // Don't allow ambiguous multiple matching
-                {
-                    return bySuffix;
-                }
-
-                return new MemberInfo[0];
+                return bySuffix;
             }
 
             var keys = GetKeyMembersImpl(type);
