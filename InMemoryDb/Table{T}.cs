@@ -4,15 +4,15 @@ using System.Collections.Generic;
 
 namespace InMemoryDb
 {
-    /// <inheritdoc cref="IInMemoryTable" />
-    public class InMemoryTable<TValue> : InMemoryTableBase<object, TValue>, IReadOnlyCollection<TValue>
+    /// <inheritdoc cref="ITable" />
+    public class Table<TValue> : TableBase<object, TValue>, IReadOnlyCollection<TValue>
         where TValue : new()
     {
         /// <inheritdoc />
         /// <summary>
-        /// Initializes new instance of <see cref="InMemoryTable{TValue}" />
+        /// Initializes new instance of <see cref="Table{TKey,TValue}" />
         /// </summary>
-        public InMemoryTable(
+        public Table(
             string connectionString,
             Func<TValue, object> keyFactory = null,
             string tableName = null,

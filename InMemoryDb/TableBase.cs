@@ -6,10 +6,10 @@ using System.Threading.Tasks;
 
 namespace InMemoryDb
 {
-    /// <inheritdoc cref="IInMemoryTable" />
+    /// <inheritdoc cref="ITable" />
     /// <typeparam name="TKey">Type of the data key.</typeparam>
     /// <typeparam name="TValue">Type of the data value.</typeparam>
-    public abstract class InMemoryTableBase<TKey, TValue> : IInMemoryTable
+    public abstract class TableBase<TKey, TValue> : ITable
         where TValue : new()
     {
         protected readonly IDictionary<TKey, TValue> _store;
@@ -17,7 +17,7 @@ namespace InMemoryDb
         private readonly ContinuousReader<TValue> _reader;
 
         /// <summary>
-        /// Initializes new instance of <see cref="InMemoryTableBase{TKey, TValue}"/>
+        /// Initializes new instance of <see cref="TableBase{TKey,TValue}"/>
         /// </summary>
         /// <param name="connectionString">SQL Server connection string.</param>
         /// <param name="keyFactory">In-memory dictionary's key factory.</param>
@@ -27,7 +27,7 @@ namespace InMemoryDb
         /// <param name="commandTimeout">SQL Command timeout in secconds.</param>
         /// <param name="batchSize">Batch size of single read operation.</param>
         /// <param name="delay">Delay (in milliseconds) between two requests when reader continuously polling origin data source.</param>
-        protected InMemoryTableBase(
+        protected TableBase(
             string connectionString,
             Func<TValue, TKey> keyFactory,
             string tableName = null,

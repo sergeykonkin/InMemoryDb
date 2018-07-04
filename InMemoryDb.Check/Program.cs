@@ -24,11 +24,11 @@ namespace InMemoryDb.Check
         }
     }
 
-    public class MyDatabase : InMemoryDatabase
+    public class MyDatabase : Database
     {
-        public InMemoryTable<User> Users { get; }
-        public InMemoryTable<Group> Groups { get; }
-        public InMemoryTable<UserGroup> UserGroups { get; }
+        public Table<User> Users { get; }
+        public Table<Group> Groups { get; }
+        public Table<UserGroup> UserGroups { get; }
 
         public MyDatabase() : base(Check.Setup.LocalDb.ConnectionString)
         {

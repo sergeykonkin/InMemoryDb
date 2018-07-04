@@ -7,7 +7,7 @@ namespace InMemoryDb
     /// <summary>
     /// In-memory replica of database table.
     /// </summary>
-    public interface IInMemoryTable
+    public interface ITable
     {
         /// <summary>
         /// Starts continuous data reading routine.

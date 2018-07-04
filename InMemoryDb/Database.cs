@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace InMemoryDb
 {
-    public abstract class InMemoryDatabase
+    public abstract class Database
     {
         private readonly string _connectionString;
 
@@ -19,10 +19,10 @@ namespace InMemoryDb
         private Action<Exception> _handleException;
 
         /// <summary>
-        /// Initializes new instance of <see cref="InMemoryDatabase"/>
+        /// Initializes new instance of <see cref="Database"/>
         /// </summary>
         /// <param name="connectionString">SQL Server connection string.</param>
-        protected InMemoryDatabase(string connectionString)
+        protected Database(string connectionString)
         {
             _connectionString = connectionString;
         }
@@ -53,15 +53,15 @@ namespace InMemoryDb
         }
 
         /// <summary>
-        /// Initializes this <see cref="InMemoryDatabase"/>.
+        /// Initializes this <see cref="Database"/>.
         /// </summary>
         public void Init(CancellationToken cancellationToken = default(CancellationToken))
         {
             var tables = this.GetType()
                 .GetProperties(BindingFlags.Public | BindingFlags.Instance)
-                .Where(IsInMemoryTable)
+                .Where(prop => prop.PropertyType.GetInterfaces().Any(i => i == typeof(ITable)))
                 .Select(prop => prop.GetValue(this))
-                .Cast<IInMemoryTable>();
+                .Cast<ITable>();
 
             var initTasks = new List<Task>();
             foreach (var table in tables)
@@ -78,10 +78,10 @@ namespace InMemoryDb
         /// </summary>
         /// <param name="keyFactory">In-memory dictionary's key factory.</param>
         /// <param name="tableName">The name of the table to read data from.</param>
-        protected InMemoryTable<TKey, TValue> Table<TKey, TValue>(Func<TValue, TKey> keyFactory, string tableName = null)
+        protected Table<TKey, TValue> Table<TKey, TValue>(Func<TValue, TKey> keyFactory, string tableName = null)
             where TValue : new()
         {
-            return new InMemoryTable<TKey, TValue>(
+            return new Table<TKey, TValue>(
                 _connectionString,
                 keyFactory,
                 tableName,
@@ -97,10 +97,10 @@ namespace InMemoryDb
         /// </summary>
         /// <param name="keyFactory">In-memory dictionary's key factory.</param>
         /// <param name="tableName">The name of the table to read data from.</param>
-        protected InMemoryTable<TValue> Table<TValue>(Func<TValue, object> keyFactory = null, string tableName = null)
+        protected Table<TValue> Table<TValue>(Func<TValue, object> keyFactory = null, string tableName = null)
             where TValue : new()
         {
-            return new InMemoryTable<TValue>(
+            return new Table<TValue>(
                 _connectionString,
                 keyFactory,
                 tableName,
@@ -109,11 +109,6 @@ namespace InMemoryDb
                 _commandTimeout,
                 _batchSize,
                 _delay);
-        }
-
-        private static bool IsInMemoryTable(PropertyInfo prop)
-        {
-            return prop.PropertyType.GetInterfaces().Any(i => i == typeof(IInMemoryTable));
         }
     }
 }
