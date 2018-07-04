@@ -12,7 +12,11 @@ namespace InMemoryDb
     public abstract class TableBase<TKey, TValue> : ITable
         where TValue : new()
     {
+        /// <summary>
+        /// In-memory data store.
+        /// </summary>
         protected readonly IDictionary<TKey, TValue> _store;
+
         private readonly Func<TValue, TKey> _keyFactory;
         private readonly ContinuousReader<TValue> _reader;
 

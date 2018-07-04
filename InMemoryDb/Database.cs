@@ -7,6 +7,9 @@ using System.Threading.Tasks;
 
 namespace InMemoryDb
 {
+    /// <summary>
+    /// Holds Table definitions and helps to initialize them.
+    /// </summary>
     public abstract class Database
     {
         private readonly string _connectionString;

@@ -34,6 +34,11 @@ namespace InMemoryDb
         {
         }
 
+        /// <summary>
+        /// Gets value from in-memory store by it's key.
+        /// </summary>
+        /// <param name="index">Value's key.</param>
+        /// <returns>Value by key.</returns>
         public TValue this[object index] => _store[index];
 
         /// <inheritdoc />
