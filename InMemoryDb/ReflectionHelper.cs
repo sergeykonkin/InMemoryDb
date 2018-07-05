@@ -147,5 +147,17 @@ namespace InMemoryDb
                     throw new InvalidOperationException();
             }
         }
+        public static Type GetMemberType(this MemberInfo memberInfo)
+        {
+            switch (memberInfo.MemberType)
+            {
+                case MemberTypes.Field:
+                    return ((FieldInfo)memberInfo).FieldType;
+                case MemberTypes.Property:
+                    return ((PropertyInfo)memberInfo).PropertyType;
+                default:
+                    throw new InvalidOperationException();
+            }
+        }
     }
 }

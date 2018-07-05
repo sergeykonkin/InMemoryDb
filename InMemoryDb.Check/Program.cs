@@ -12,6 +12,7 @@ namespace InMemoryDb.Check
             var db = new MyDatabase();
             db.Setup(handleException: Console.WriteLine);
             db.Init();
+            db.WhenInitialReadFinished().Wait();
 
             var admins =
                 (from u in db.Users

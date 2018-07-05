@@ -1,7 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -13,6 +11,7 @@ namespace InMemoryDb
     public abstract class Database
     {
         private readonly string _connectionString;
+        private readonly ITable[] _tables;
 
         private string _rowVersionColumnName = "RowVersion";
         private string _deletedColumnName = "IsDeleted";
@@ -21,6 +20,8 @@ namespace InMemoryDb
         private int _delay = 200;
         private Action<Exception> _handleException;
 
+        private bool _initCalled;
+
         /// <summary>
         /// Initializes new instance of <see cref="Database"/>
         /// </summary>
@@ -28,6 +29,12 @@ namespace InMemoryDb
         protected Database(string connectionString)
         {
             _connectionString = connectionString;
+
+            _tables = ReflectionHelper.GetWritableMembers(this.GetType())
+                .Where(member => member.GetMemberType().GetInterfaces().Any(i => i == typeof(ITable)))
+                .Select(member => member.GetValue(this))
+                .Cast<ITable>()
+                .ToArray();
         }
 
         /// <summary>
@@ -60,20 +67,25 @@ namespace InMemoryDb
         /// </summary>
         public void Init(CancellationToken cancellationToken = default(CancellationToken))
         {
-            var tables = this.GetType()
-                .GetProperties(BindingFlags.Public | BindingFlags.Instance)
-                .Where(prop => prop.PropertyType.GetInterfaces().Any(i => i == typeof(ITable)))
-                .Select(prop => prop.GetValue(this))
-                .Cast<ITable>();
-
-            var initTasks = new List<Task>();
-            foreach (var table in tables)
+            foreach (var table in _tables)
             {
                 table.Start(cancellationToken, _handleException);
-                initTasks.Add(table.WhenInitialReadFinished(cancellationToken));
             }
 
-            Task.WaitAll(initTasks.ToArray());
+            _initCalled = true;
+        }
+
+        /// <summary>
+        /// Returns the task that will be completed when initial data read is finished.
+        /// </summary>
+        public Task WhenInitialReadFinished(CancellationToken cancellationToken = default(CancellationToken))
+        {
+            if (!_initCalled)
+            {
+                throw new InvalidOperationException("Reading was not started. Call Init() first.");
+            }
+
+            return Task.WhenAll(_tables.Select(t => t.WhenInitialReadFinished(cancellationToken)));
         }
 
         /// <summary>
